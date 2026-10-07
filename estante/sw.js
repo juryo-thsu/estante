@@ -5,7 +5,7 @@
 // está inteiro. Assim o app nunca mistura arquivos de duas versões.
 // TODA mudança em estante/ que vai para a main precisa subir VERSAO (e um arquivo novo entra em ARQUIVOS).
 
-const VERSAO = '2b-1';
+const VERSAO = '2c-1';
 const CACHE = `estante-${VERSAO}`;
 
 const ARQUIVOS = [
@@ -24,6 +24,7 @@ const ARQUIVOS = [
   'js/zip.js',
   'js/importacao.js',
   'js/offline.js',
+  'js/armazenamento.js',
   'js/views/estante.js',
   'js/views/favoritos.js',
   'js/views/ajustes.js',

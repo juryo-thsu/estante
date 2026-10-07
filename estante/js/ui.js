@@ -19,10 +19,11 @@ export function estadoDeLeitura(v) {
   return `Página ${v.pagina} / ${v.paginas}`;
 }
 
-/** Bytes em MB decimais, como o app Arquivos mostra: "71 MB". */
+/** Bytes em unidades decimais, como o app Arquivos mostra: "71 MB", "1,2 GB". */
 export function tamanhoLegivel(bytes = 0) {
   if (bytes < 1e6) return `${Math.max(1, Math.round(bytes / 1e3))} KB`;
-  return `${Math.round(bytes / 1e6)} MB`;
+  if (bytes < 1e9) return `${Math.round(bytes / 1e6)} MB`;
+  return `${(bytes / 1e9).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} GB`;
 }
 
 export function porcentagem(v) {

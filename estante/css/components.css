@@ -157,6 +157,24 @@
   font: var(--t-small);
 }
 
+/* Barra de espaço: o trilho é a cota, o preenchimento é o uso ("Espaço estimado") */
+.uso {
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-4);
+  background: var(--color-border);
+}
+.uso__preenchido {
+  display: block;
+  width: max(4px, calc(var(--uso) * 100%));
+  height: 100%;
+  border-radius: var(--radius-4);
+  background: var(--color-accent);
+}
+.botao:disabled {
+  cursor: default;
+}
+
 /* ---------- Campo de texto ---------- */
 .campo {
   display: flex;

@@ -2,7 +2,7 @@
 
 import {
   estado, assinar, carregar, volume, definirTema, definirFiltro, definirBusca, proximaOrdem, definirOculto, mostrarOcultos,
-  removerArquivo, importar, encerrarImportacao, abrirCorrecao, corrigirResultado,
+  removerArquivo, importar, importando, encerrarImportacao, abrirCorrecao, corrigirResultado,
 } from './store.js';
 import { renderEstante, renderColecao, renderCarregando } from './views/estante.js';
 import { renderFavoritos } from './views/favoritos.js';
@@ -12,6 +12,7 @@ import { renderDados } from './views/dados.js';
 import { renderInstalar } from './views/instalar.js';
 import { abrirFolha, folhaAberta } from './views/folha.js';
 import { iniciarOffline } from './offline.js';
+import { atualizarArmazenamento, pedirPersistencia, garantirPersistencia } from './armazenamento.js';
 
 const app = document.getElementById('app');
 const tela = document.getElementById('tela');
@@ -114,6 +115,7 @@ function ir(destino) {
     }
   }
   render({ manterRolagem: !mudou });
+  if (destino === 'dados') atualizarArmazenamento();
   // Tocar de novo na aba atual volta ao topo, como nas abas do iOS
   if (!mudou) tela.querySelector('[data-rolagem]')?.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -123,6 +125,7 @@ assinar((motivo) => {
     avisar('Não deu para salvar no aparelho. Confira o espaço livre.');
     return;
   }
+  if (motivo === 'importacao' && !importando()) garantirPersistencia();
   if (motivo === 'busca') {
     const colecao = document.getElementById('colecao');
     if (colecao) colecao.innerHTML = renderColecao();
@@ -172,6 +175,7 @@ async function removerDoAparelho(id) {
   try {
     await removerArquivo(id);
     avisar('Arquivo removido. O progresso continua salvo.');
+    atualizarArmazenamento();
   } catch (erro) {
     console.error(erro);
     avisar('Não deu para remover o arquivo.');
@@ -264,6 +268,7 @@ tela.addEventListener('click', (evento) => {
     ui.voltarDaInstalacao = ui.destino;
     ir('instalar');
   } else if (acao === 'fechar-instalacao') ir(ui.voltarDaInstalacao);
+  else if (acao === 'pedir-persistencia') pedirPersistencia();
   else if (acao === 'filtro') definirFiltro(alvo.dataset.filtro);
   else if (acao === 'ordenar') proximaOrdem();
   else if (acao === 'tema') definirTema(alvo.dataset.tema);
@@ -318,6 +323,7 @@ carregar()
   .finally(() => {
     clearTimeout(esperaLonga);
     render();
+    atualizarArmazenamento();
   });
 
 iniciarOffline();

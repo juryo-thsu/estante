@@ -28,6 +28,8 @@ export const estado = {
   importacao: null,
   /** 'verificando' | 'preparando' | 'pronto' | 'indisponivel' | 'desligado' (no computador) */
   offline: 'verificando',
+  /** navigator.storage: `{ suportado, usado, cota, persistente, recusada }`; vazio até a primeira leitura. */
+  armazenamento: {},
 };
 
 function salvarPreferencias() {
@@ -146,6 +148,11 @@ export function definirOffline(situacao) {
   if (estado.offline === situacao) return;
   estado.offline = situacao;
   avisar('offline');
+}
+
+export function definirArmazenamento(dados) {
+  estado.armazenamento = { ...estado.armazenamento, ...dados };
+  avisar('armazenamento');
 }
 
 export function definirFiltro(filtro) {

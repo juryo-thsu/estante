@@ -11,7 +11,7 @@ Tsukina/
 │  ├─ index.html   moldura (tela, navegação inferior, aviso)
 │  ├─ sw.js        service worker: guarda o app no aparelho para abrir sem internet
 │  ├─ css/         tokens (temas), base, components, screens, fonts
-│  ├─ js/          app, store, ui, db, zip, importacao, offline e uma tela por arquivo em views/
+│  ├─ js/          app, store, ui, db, zip, importacao, offline, armazenamento e uma tela por arquivo em views/
 │  └─ assets/      ícones (SVG do Figma), fontes e ícones do app
 ├─ docs/           especificação e direção visual copiadas do Figma (só no PC)
 ├─ entregas/       cópia da etapa 1; as entregas seguintes viram tags do git (só no PC)
@@ -50,15 +50,16 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Os SVGs de `assets/icons/` são os exportados do Figma, sem alteração. A cor é aplicada por máscara no CSS, para seguir o tema.
 - `js/store.js` guarda o estado e o que fica salvo no aparelho. As telas em `js/views/` só leem do store e devolvem HTML; os toques são tratados em `js/app.js`.
 - `js/db.js` é o IndexedDB: a loja `volumes` (série, progresso, marcas, miniatura da capa, índice das páginas) e a loja `arquivos` (o CBZ/ZIP original, na mesma chave). Remover do aparelho apaga só a segunda.
-- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-2b-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
+- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-2c-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
 - `js/offline.js` registra o service worker e pergunta a ele se o cache está completo, para mostrar "Pronto para usar offline" em Ajustes → Dados, armazenamento e backup. No Live Server (`127.0.0.1`) o service worker fica desligado, para cada recarga mostrar o código editado; para testar o offline no computador, abra `http://127.0.0.1:5500/?offline`.
+- `js/armazenamento.js` lê o espaço usado e a cota (`navigator.storage.estimate`) e a persistência (`persisted`/`persist`) para a tela Dados e app.
 - `js/zip.js` é o leitor de ZIP; `js/importacao.js` valida o arquivo, ordena as páginas, gera a miniatura e deduz série e volume pelo nome.
 - Nomes de classes, funções e comentários em português.
 
 ## Etapas
 
 1. **Estante, Favoritos, Ajustes, temas e folha de ações** (feita).
-2. Importação de CBZ/ZIP, armazenamento, instalação e uso offline, em três partes: 2a importar e guardar e 2b instalar e usar offline (entregues, em teste no iPhone); 2c armazenamento.
+2. Importação de CBZ/ZIP, armazenamento, instalação e uso offline, em três partes: 2a importar e guardar, 2b instalar e usar offline e 2c armazenamento (entregues, em teste no iPhone).
 3. Leitor: gestos, direção de leitura, progresso, fim de volume.
 4. Anotações, backup e gestão de espaço.
 
@@ -83,3 +84,7 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Tela "Dados e app" nesta parte só com "Ler como app" e o cartão do offline; espaço e persistência entram na 2c, backup e Gerenciar volumes na etapa 4. "Ler como app" some quando o app está aberto pela tela de início.
 - Estados do cartão do offline que o Figma não mostra: "Conferindo…", "Preparando o uso offline…", "Uso offline indisponível" e, no computador, "Uso offline desligado".
 - No Safari do iPhone, fora da tela de início, a tela "Adicionar mangá" mostra "Instale antes de importar": o app instalado guarda os dados separado do Safari, e importar antes de instalar obrigaria a importar de novo.
+- Espaço no aparelho: a segunda linha mostra volumes, quantos estão sem arquivo e o limite do navegador ("2 volumes · limite de 10,7 GB"); a barra é o uso sobre esse limite, com 4 px mínimos para não sumir. As "páginas anotadas" do Figma entram com as anotações (etapa 4).
+- "Gerenciar volumes" e "Progresso e anotações" (backup) ainda não aparecem: são da etapa 4.
+- Persistência: além de "Armazenamento local padrão" e "Persistência ativa" do Figma, há "Persistência não concedida" (com "Tentar de novo") e "Persistência indisponível". "Persistência concedida" é um botão desligado.
+- Depois da primeira importação de cada abertura, o app pede persistência sozinho (sem pergunta na tela, no Safari e no Chrome). Assim os mangás ficam protegidos mesmo que ninguém abra Ajustes.
