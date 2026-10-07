@@ -1,0 +1,85 @@
+/* Estante · tokens
+   Espelha a coleção "Estante / Temas" do Figma (modos Noite e Morango).
+   Os componentes usam só as variáveis color-*, nunca as primitivas. */
+
+:root {
+  /* Noite · metal e bordô (padrão) */
+  --color-background: #0c0b0c;
+  --color-surface: #171415;
+  --color-elevated: #231b1f;
+  --color-border: #4d4030;
+  --color-accent: #b69c66;
+  --color-pressed: #c093a2;
+  --color-text: #f3ebdd;
+  --color-muted: #aa9e98;
+  --color-onAccent: #f3ebdd;
+  --color-silver: #b69c66;
+  --color-action: #7e263e;
+  --color-actionPressed: #5c1b2e;
+  --color-rose: #c093a2;
+  --color-pearl: #e5d9c7;
+
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+
+  --radius-4: 4px;
+  --radius-6: 6px;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-24: 24px;
+
+  /* Tipografia · estilos "Estante / …" */
+  --font-display: "Playfair Display", "Bodoni Moda", Didot, Georgia, serif;
+  --font-ui: Inter, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+
+  /* Movimento · "Fade/slide 180–220 ms, pulso 150 ms em cada fase" */
+  --motion-in: 220ms;
+  --motion-out: 180ms;
+  --motion-pulse: 150ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Medidas do quadro de referência (393 pt) */
+  --gutter: 24px;
+  --touch: 44px;
+
+  color-scheme: dark;
+}
+
+:root[data-tema="morango"] {
+  /* Morango · creme e rosa */
+  --color-background: #f5f0e6;
+  --color-surface: #fff9ef;
+  --color-elevated: #e8dfd2;
+  --color-border: #c1ad83;
+  --color-accent: #705729;
+  --color-pressed: #9c556f;
+  --color-text: #292125;
+  --color-muted: #6b5a60;
+  --color-onAccent: #fff9ef;
+  --color-silver: #705729;
+  --color-action: #873951;
+  --color-actionPressed: #672b40;
+  --color-rose: #9c556f;
+  --color-pearl: #7c6254;
+
+  color-scheme: light;
+}
+
+:root {
+  /* Estilos de texto "Estante / …" */
+  --t-title: 700 30px/38px var(--font-display);
+  --t-section: 600 17px/24px var(--font-ui);
+  --t-body: 500 14px/20px var(--font-ui);
+  --t-small: 400 12px/17px var(--font-ui);
+  --t-label: 600 12px/16px var(--font-ui);
+  --t-button: 600 14px/20px var(--font-ui);
+
+  /* Áreas seguras do iPhone (Dynamic Island e barra de início) */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}

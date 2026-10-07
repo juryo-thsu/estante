@@ -1,0 +1,23 @@
+{
+  // Live Server: o botão "Go Live" serve só a pasta do app
+  "liveServer.settings.root": "/estante",
+  "liveServer.settings.port": 5500,
+  "liveServer.settings.donotShowInfoMsg": true,
+
+  // Mesmo estilo em todos os arquivos do projeto
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.associations": {
+    "*.webmanifest": "json"
+  },
+
+  // As cópias de entrega não aparecem na busca
+  "search.exclude": {
+    "entregas": true
+  }
+}

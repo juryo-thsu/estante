@@ -1,0 +1,503 @@
+/* Estante · componentes (seção "05 · Componentes e identidade" do Figma) */
+
+/* ---------- Ícones ----------
+   Os SVGs ficam intactos em assets/icons e entram como máscara:
+   a cor vem do tema (currentColor), não do arquivo. */
+.icone {
+  display: inline-block;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  -webkit-mask: center / contain no-repeat;
+  mask: center / contain no-repeat;
+}
+.icone--books { -webkit-mask-image: url("../assets/icons/books.svg"); mask-image: url("../assets/icons/books.svg"); }
+.icone--heart { -webkit-mask-image: url("../assets/icons/heart.svg"); mask-image: url("../assets/icons/heart.svg"); }
+.icone--settings { -webkit-mask-image: url("../assets/icons/settings.svg"); mask-image: url("../assets/icons/settings.svg"); }
+.icone--planet { -webkit-mask-image: url("../assets/icons/planet.svg"); mask-image: url("../assets/icons/planet.svg"); }
+.icone--pin { -webkit-mask-image: url("../assets/icons/pin.svg"); mask-image: url("../assets/icons/pin.svg"); }
+.icone--lock { -webkit-mask-image: url("../assets/icons/lock.svg"); mask-image: url("../assets/icons/lock.svg"); }
+.icone--search { -webkit-mask-image: url("../assets/icons/search.svg"); mask-image: url("../assets/icons/search.svg"); }
+.icone--sort { -webkit-mask-image: url("../assets/icons/sort.svg"); mask-image: url("../assets/icons/sort.svg"); }
+.icone--16 { width: 16px; height: 16px; }
+.icone--20 { width: 20px; height: 20px; }
+.icone--48 { width: 48px; height: 48px; }
+
+/* Coração preenchido: duas camadas (miolo + traço) para as duas cores seguirem o tema */
+.coracao {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+.coracao::before,
+.coracao::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  -webkit-mask: center / contain no-repeat;
+  mask: center / contain no-repeat;
+}
+.coracao::before {
+  background-color: var(--color-action);
+  -webkit-mask-image: url("../assets/icons/heart-filled.svg");
+  mask-image: url("../assets/icons/heart-filled.svg");
+}
+.coracao::after {
+  background-color: var(--color-accent);
+  -webkit-mask-image: url("../assets/icons/heart.svg");
+  mask-image: url("../assets/icons/heart.svg");
+}
+.coracao--ativo::before {
+  background-color: var(--color-rose);
+  -webkit-mask-image: url("../assets/icons/heart-active.svg");
+  mask-image: url("../assets/icons/heart-active.svg");
+}
+
+/* Pulso: 150 ms para crescer, 150 ms para voltar */
+@keyframes pulso {
+  0% { transform: scale(1); }
+  50% { transform: scale(var(--pulso, 1.14)); }
+  100% { transform: scale(1); }
+}
+.pulsando {
+  animation: pulso calc(var(--motion-pulse) * 2) var(--ease);
+}
+
+/* ---------- Estante / Botão ---------- */
+.botao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding-inline: var(--space-16);
+  border-radius: var(--radius-4);
+  background: var(--color-action);
+  color: var(--color-onAccent);
+  font: var(--t-button);
+  text-align: center;
+  transition: background-color var(--motion-pulse) var(--ease);
+}
+.botao:active {
+  background: var(--color-actionPressed);
+}
+.botao--secundario {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-6);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.botao--secundario:active {
+  background: var(--color-elevated);
+}
+
+/* ---------- Estante / Filtro ---------- */
+.filtros {
+  display: flex;
+  gap: var(--space-8);
+}
+.filtro {
+  flex: 118 1 0%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-6);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font: var(--t-label);
+  white-space: nowrap;
+  transition: background-color var(--motion-pulse) var(--ease), border-color var(--motion-pulse) var(--ease);
+}
+.filtro:first-child {
+  flex-grow: 93;
+}
+.filtro[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-action);
+  color: var(--color-onAccent);
+}
+
+/* ---------- Capa ---------- */
+.capa {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 329 / 458;
+  overflow: hidden;
+  border-radius: var(--radius-4);
+  background: var(--color-elevated);
+}
+.capa img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.capa--retomar {
+  flex: none;
+  width: 72px;
+  height: 108px;
+  aspect-ratio: auto;
+}
+.capa--mini {
+  flex: none;
+  width: 39px;
+  height: 56px;
+  aspect-ratio: auto;
+}
+
+/* Capa de exemplo (sem arquivo): some quando a importação trouxer as capas reais */
+.capa--exemplo {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--tom, var(--color-elevated));
+  color: var(--tom-texto, var(--color-text));
+}
+.capa--exemplo[data-tom="acao"] { --tom: var(--color-action); --tom-texto: var(--color-onAccent); }
+.capa--exemplo[data-tom="rosa"] { --tom: var(--color-rose); --tom-texto: var(--color-background); }
+.capa--exemplo[data-tom="perola"] { --tom: var(--color-pearl); --tom-texto: var(--color-background); }
+.capa--exemplo .capa__numero {
+  font: 700 64px/1 var(--font-display);
+}
+.capa--retomar.capa--exemplo {
+  padding: 6px;
+}
+.capa--retomar.capa--exemplo .capa__numero {
+  font-size: 28px;
+}
+.capa--mini.capa--exemplo {
+  padding: 4px;
+}
+.capa--mini.capa--exemplo .capa__numero {
+  font-size: 16px;
+}
+
+/* ---------- Estante / Mangá ---------- */
+.grade {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--space-16);
+  row-gap: var(--space-20);
+}
+.volume {
+  position: relative;
+  min-width: 0;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.volume__abrir {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.volume__identificacao {
+  display: flex;
+  flex-direction: column;
+}
+.volume__serie {
+  display: -webkit-box;
+  height: 40px;
+  overflow: hidden;
+  font: var(--t-body);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.volume__numero,
+.volume__estado {
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.volume__acoes {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-top-right-radius: var(--radius-4);
+  background: var(--color-background);
+  color: var(--color-text);
+  font: var(--t-section);
+  opacity: 0.88;
+}
+.volume__favorito {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  --pulso: 1.12;
+}
+
+/* ---------- Estante / Último lido ---------- */
+.ultimo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  height: 72px;
+  padding: 8px;
+  border-radius: var(--radius-6);
+  background: var(--color-surface);
+  transition: background-color var(--motion-pulse) var(--ease);
+}
+.ultimo:active {
+  background: var(--color-elevated);
+}
+.ultimo__posicao {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font: var(--t-small);
+}
+.ultimo__volume {
+  overflow: hidden;
+  font: var(--t-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ultimo__pagina {
+  color: var(--color-muted);
+}
+.ultimo__quando {
+  color: var(--color-accent);
+}
+
+/* ---------- Estante / Progresso de pérolas ----------
+   7 pérolas discretas num fio; o pingente marca a posição salva. */
+.perolas {
+  position: relative;
+  width: 100%;
+  height: 16px;
+}
+.perolas__fio {
+  position: absolute;
+  top: 7px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--color-border);
+}
+.perolas__perola {
+  position: absolute;
+  top: 5.5px;
+  left: calc((100% - 4px) * var(--i) / 6);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-pearl);
+}
+.perolas__pingente {
+  position: absolute;
+  top: 0;
+  left: calc(2px + (100% - 4px) * var(--p) - 3px);
+  width: 6px;
+  height: 8px;
+  overflow: hidden;
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Navegação inferior ---------- */
+.nav {
+  flex: none;
+  padding: 8px 20px max(var(--sab), 8px);
+  background: var(--color-background);
+  transition: background-color var(--motion-out) var(--ease);
+}
+.nav__destinos {
+  display: flex;
+  gap: var(--space-4);
+  height: 50px;
+}
+.nav__destino {
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.nav__destino[aria-current="page"] {
+  color: var(--color-accent);
+}
+
+/* ---------- Estados vazios ---------- */
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-16);
+  min-height: 300px;
+  padding-top: 70px;
+}
+.vazio--convite {
+  min-height: 280px;
+  padding-top: 60px;
+}
+.vazio .icone {
+  color: var(--color-accent);
+}
+.vazio__titulo {
+  font: var(--t-section);
+  text-align: center;
+}
+.vazio__mensagem {
+  width: 300px;
+  max-width: 100%;
+  color: var(--color-muted);
+}
+
+/* Faixa tartan · 8 px */
+.tartan {
+  height: 8px;
+  background-color: var(--color-border);
+  -webkit-mask: url("../assets/icons/tartan-strip.svg") left center / 100% 100% no-repeat;
+  mask: url("../assets/icons/tartan-strip.svg") left center / 100% 100% no-repeat;
+}
+
+/* ---------- Folha de ações ---------- */
+.camada {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.camada__fundo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--color-background);
+  opacity: 0;
+  transition: opacity var(--motion-out) var(--ease);
+}
+.camada[data-aberta] .camada__fundo {
+  opacity: 0.72;
+  transition-duration: var(--motion-in);
+}
+.folha {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 11px 23px calc(15px + var(--sab));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-8);
+  background: var(--color-surface);
+  outline: none;
+  transform: translateY(100%);
+  transition: transform var(--motion-out) var(--ease);
+  will-change: transform;
+}
+.camada[data-aberta] .folha {
+  transform: translateY(var(--arrasto, 0px));
+  transition-duration: var(--motion-in);
+}
+.folha[data-arrastando] {
+  transition: none;
+}
+.folha__alca {
+  display: flex;
+  justify-content: center;
+  height: 8px;
+  touch-action: none;
+}
+.folha__puxador {
+  width: 40px;
+  height: 3px;
+  border-radius: var(--radius-4);
+  background: var(--color-muted);
+}
+.folha__titulo {
+  font: var(--t-section);
+  touch-action: none;
+}
+.folha__posicao {
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.acao {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  width: 100%;
+  height: 48px;
+  border-radius: var(--radius-4);
+  font: var(--t-body);
+  white-space: nowrap;
+}
+.acao .icone {
+  color: var(--color-accent);
+}
+.acao__area {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+
+/* ---------- Aviso curto ---------- */
+.aviso {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(58px + max(var(--sab), 8px) + 12px);
+  z-index: 20;
+  padding: 11px 15px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-6);
+  background: var(--color-elevated);
+  color: var(--color-text);
+  font: var(--t-small);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--motion-out) var(--ease), transform var(--motion-out) var(--ease);
+}
+.aviso[data-visivel] {
+  opacity: 1;
+  transform: none;
+  transition-duration: var(--motion-in);
+}
+
+/* Movimento reduzido: só fade, sem deslocamento nem pulso */
+@media (prefers-reduced-motion: reduce) {
+  .folha {
+    transform: none;
+    opacity: 0;
+    transition: opacity var(--motion-out) linear;
+  }
+  .camada[data-aberta] .folha {
+    transform: none;
+    opacity: 1;
+  }
+  .aviso {
+    transform: none;
+  }
+  .pulsando {
+    animation: none;
+  }
+}

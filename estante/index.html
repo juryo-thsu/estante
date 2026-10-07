@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="noite">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Estante</title>
+  <meta name="description" content="Sua estante de mangás, no seu aparelho.">
+
+  <meta name="theme-color" content="#0c0b0c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Estante">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/app-icon.svg">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/screens.css">
+</head>
+<body>
+  <script>
+    // Aplica o tema salvo antes da primeira pintura, para não piscar o tema errado.
+    try {
+      var salvo = JSON.parse(localStorage.getItem('estante:v1') || '{}');
+      if (salvo.tema === 'morango') document.documentElement.dataset.tema = 'morango';
+    } catch (erro) {}
+  </script>
+
+  <div class="app" id="app">
+    <main class="tela" id="tela"></main>
+
+    <nav class="nav" id="nav" aria-label="Principal">
+      <div class="nav__destinos">
+        <button class="nav__destino" type="button" data-destino="biblioteca">
+          <span class="icone icone--books" aria-hidden="true"></span>
+          Biblioteca
+        </button>
+        <button class="nav__destino" type="button" data-destino="favoritos">
+          <span class="icone icone--heart" aria-hidden="true"></span>
+          Favoritos
+        </button>
+        <button class="nav__destino" type="button" data-destino="ajustes">
+          <span class="icone icone--settings" aria-hidden="true"></span>
+          Ajustes
+        </button>
+      </div>
+    </nav>
+
+    <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

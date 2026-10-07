@@ -1,0 +1,308 @@
+/* Estante · telas (seção "01 · Estante e biblioteca" do Figma) */
+
+/* ---------- Início — Estante ---------- */
+.estante {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--gutter) 32px;
+}
+
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  min-height: 52px;
+}
+.topo__texto {
+  min-width: 0;
+}
+.topo__linha {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  height: 38px;
+}
+.simbolo {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--color-accent);
+}
+.simbolo .icone {
+  width: 20.625px;
+  height: 20.625px;
+}
+.topo__total {
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.adicionar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-4);
+  background: var(--color-action);
+  color: var(--color-onAccent);
+  font: var(--t-small);
+  transition: background-color var(--motion-pulse) var(--ease);
+}
+.adicionar:active {
+  background: var(--color-actionPressed);
+}
+
+/* Continue de onde parou */
+.retomar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  min-height: 152px;
+  padding: 8.5px 15px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-8);
+  background: var(--color-surface);
+}
+.retomar__xadrez {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 76px;
+  height: 8px;
+  background-color: var(--color-accent);
+  -webkit-mask: url("../assets/icons/tartan-corner.svg") center / 76px 8px no-repeat;
+  mask: url("../assets/icons/tartan-corner.svg") center / 76px 8px no-repeat;
+}
+.retomar__texto {
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.retomar__chamada {
+  color: var(--color-accent);
+  font: var(--t-label);
+}
+.retomar__volume {
+  overflow: hidden;
+  font: var(--t-section);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.retomar__pagina {
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.retomar .botao {
+  min-height: 44px;
+  border-radius: var(--radius-6);
+}
+
+/* Busca e anotações */
+.busca-linha {
+  display: flex;
+  gap: var(--space-8);
+  height: 44px;
+}
+.busca {
+  flex: 1 1 0%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+  padding-inline: var(--space-16);
+  border-radius: var(--radius-6);
+  background: var(--color-surface);
+  color: var(--color-muted);
+}
+.busca:focus-within {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.busca__campo-area {
+  flex: 1 1 0%;
+  min-width: 0;
+  height: 20px;
+  overflow: hidden;
+}
+/* 16 px reais (o iOS dá zoom em campos menores) reduzidos para os 14 px do design */
+.busca__campo {
+  display: block;
+  width: calc(100% / 0.875);
+  height: calc(20px / 0.875);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  background: none;
+  color: var(--color-text);
+  font: 500 16px/1 var(--font-ui);
+  transform: scale(0.875);
+  transform-origin: 0 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.busca__campo::placeholder {
+  color: var(--color-muted);
+  opacity: 1;
+}
+.busca__campo::-webkit-search-cancel-button,
+.busca__campo::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.atalho {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: 44px;
+  color: var(--color-accent);
+  font: var(--t-small);
+  white-space: nowrap;
+}
+.atalho--anotacoes {
+  width: 112px;
+}
+.atalho--ver {
+  width: 106px;
+}
+
+/* Minha coleção */
+.colecao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.colecao__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  height: 32px;
+}
+.secao-titulo {
+  min-width: 0;
+  overflow: hidden;
+  font: var(--t-section);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ordenar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-width: 98px;
+  height: 44px;
+  color: var(--color-muted);
+  font: var(--t-small);
+  white-space: nowrap;
+}
+.colecao__grupo {
+  color: var(--color-accent);
+  font: var(--t-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.colecao__vazio {
+  padding-block: var(--space-24);
+  color: var(--color-muted);
+}
+.colecao__ocultos {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-accent);
+  font: var(--t-small);
+}
+
+/* Últimos lidos */
+.ultimos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.ultimos__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+}
+.ultimos__atalhos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+}
+
+.exemplo-nota {
+  padding-top: var(--space-8);
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+
+/* ---------- Favoritos ---------- */
+.introducao {
+  color: var(--color-muted);
+}
+
+/* ---------- Ajustes ---------- */
+.ajustes__secao {
+  font: var(--t-section);
+}
+.ajustes__texto {
+  color: var(--color-muted);
+}
+.temas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+}
+.tema {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  height: 128px;
+  padding: 15px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-4);
+  background: var(--color-surface);
+  transition: border-color var(--motion-pulse) var(--ease), background-color var(--motion-out) var(--ease);
+}
+.tema[aria-pressed="true"] {
+  border-color: var(--color-accent);
+}
+.tema__amostra {
+  align-self: stretch;
+  height: 20px;
+  border-radius: var(--radius-4);
+  background: var(--color-action);
+}
+.tema__amostra--morango {
+  background: var(--color-rose);
+}
+.tema__nome {
+  font: var(--t-section);
+}
+.tema__descricao {
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.ajustes__nota {
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.ajustes__versao {
+  color: var(--color-accent);
+  font: var(--t-label);
+}
