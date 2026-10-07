@@ -899,6 +899,392 @@
   transition-duration: var(--motion-in);
 }
 
+/* ---------- Anotar página (editor) ---------- */
+.editor {
+  position: fixed;
+  inset: 0;
+  z-index: 16;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sat) 0 var(--sab);
+  overflow: hidden;
+  outline: none;
+  background: var(--color-background);
+  opacity: 0;
+  transition: opacity var(--motion-out) var(--ease);
+}
+.editor[data-aberto] {
+  opacity: 1;
+  transition-duration: var(--motion-in);
+}
+.editor__topo {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding-inline: var(--gutter);
+}
+.editor__cancelar {
+  width: 76px;
+  height: 44px;
+  color: var(--color-muted);
+  font: var(--t-body);
+}
+.editor__titulo {
+  font: var(--t-section);
+}
+.editor__salvar {
+  width: 72px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: var(--radius-6);
+}
+.editor__contexto {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  height: 36px;
+  padding-inline: var(--gutter);
+  color: var(--color-muted);
+  font: var(--t-small);
+  white-space: nowrap;
+}
+.editor__situacao {
+  color: var(--color-accent);
+}
+/* A página cabe na área (até 300 px de largura, como no Figma) e a camada de marcas a acompanha */
+.editor__area {
+  flex: 1 1 412px;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+.editor__folha {
+  position: relative;
+}
+.editor__imagem {
+  display: block;
+  max-width: min(300px, calc(100cqw - 92px));
+  max-height: calc(100cqh - 20px);
+}
+.editor__camada {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.editor__toque {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  cursor: crosshair;
+}
+.editor__texto-novo {
+  position: absolute;
+  z-index: 1;
+  width: 70%;
+  padding: 6px 8px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-4);
+  outline: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: 400 16px/1.3 var(--font-ui);
+  transform: translate(-50%, -50%);
+}
+.editor__visibilidade {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding-inline: var(--gutter);
+}
+.editor__olho {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 147px;
+  height: 44px;
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.editor__preservado {
+  color: var(--color-accent);
+  font: var(--t-small);
+}
+.editor__ferramentas {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  height: 112px;
+  padding-inline: var(--gutter);
+  background: var(--color-surface);
+}
+.editor__selecao {
+  display: flex;
+  gap: var(--space-8);
+  height: 56px;
+}
+.ferramenta-anotar {
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-6);
+  color: var(--color-text);
+  font: var(--t-label);
+}
+.ferramenta-anotar span {
+  color: var(--color-muted);
+}
+.ferramenta-anotar[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-elevated);
+  color: var(--color-accent);
+}
+.ferramenta-anotar[aria-pressed="true"] span {
+  color: var(--color-accent);
+}
+.editor__ajustes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+}
+.editor__cores {
+  display: flex;
+  gap: var(--space-8);
+}
+.cor {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 44px;
+}
+.cor::before {
+  content: "";
+  width: 22px;
+  height: 22px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--cor);
+}
+.cor[aria-pressed="true"]::before {
+  border-color: var(--color-text);
+}
+.cor--pressed { --cor: var(--color-pressed); }
+.cor--accent { --cor: var(--color-accent); }
+.editor__espessura {
+  width: 60px;
+  height: 44px;
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.editor__historico {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--color-muted);
+}
+.editor__historico:disabled {
+  opacity: 0.4;
+}
+.editor__observacao {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--gutter);
+}
+.editor__rotulo {
+  color: var(--color-muted);
+  font: var(--t-label);
+}
+.editor__campo {
+  height: 48px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-6);
+  outline: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: 400 16px/1.3 var(--font-ui);
+}
+.editor__campo:focus {
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+/* ---------- Anotações — por volume e capítulo ---------- */
+.anotacoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--gutter) var(--space-24);
+}
+.anotacoes__total {
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.abas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+.aba {
+  display: grid;
+  place-items: center;
+  height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-6);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font: var(--t-button);
+}
+.aba[aria-selected="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-elevated);
+  color: var(--color-accent);
+}
+.busca--anotacoes {
+  flex: none;
+  height: 48px;
+}
+.anotacoes__salva {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 36px;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-6);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.anotacoes__salva .icone {
+  width: 16px;
+  height: 16px;
+  color: var(--color-accent);
+}
+.anotacoes__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding-top: var(--space-8);
+}
+.anotacoes__volume {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 56px;
+}
+.capa--anotacao {
+  flex: none;
+  width: 38px;
+  height: 54px;
+  aspect-ratio: auto;
+}
+.capa--anotacao.capa--sem-imagem {
+  padding: 3px;
+}
+.capa--anotacao.capa--sem-imagem .capa__numero {
+  font-size: 16px;
+}
+.anotacoes__volume-texto {
+  min-width: 0;
+}
+.anotacoes__volume-nome {
+  font: var(--t-section);
+}
+.anotacoes__volume-contexto {
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.anotacao {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 160px;
+  padding: 11px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-8);
+  background: var(--color-surface);
+}
+.anotacao__miniatura {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 120px;
+}
+.miniatura-folha {
+  position: relative;
+  display: block;
+}
+.miniatura-folha img {
+  display: block;
+  max-width: 92px;
+  max-height: 120px;
+  border-radius: var(--radius-4);
+}
+.anotacao__sem-arquivo {
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 120px;
+  border-radius: var(--radius-4);
+  background: var(--color-elevated);
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.anotacao__texto {
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.anotacao__pagina {
+  font: var(--t-section);
+}
+.anotacao__observacao {
+  display: -webkit-box;
+  overflow: hidden;
+  font: var(--t-small);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.anotacao__meta {
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.anotacao__acoes {
+  display: grid;
+  grid-template-columns: 93fr 116fr;
+  gap: var(--space-8);
+}
+.anotacao__acoes .botao {
+  padding-inline: var(--space-8);
+  white-space: nowrap;
+}
+.anotacao__acoes .botao:disabled {
+  opacity: 0.45;
+}
+.rodape-acao--com-linha {
+  padding-top: 7px;
+  border-top: 1px solid var(--color-border);
+}
+
 /* ---------- Volume concluído — brinde ---------- */
 .brinde {
   display: flex;

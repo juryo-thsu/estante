@@ -53,6 +53,44 @@ export function capa(v, variante = '') {
   </span>`;
 }
 
+/**
+ * Capítulo da página pela pasta dentro do ZIP ("Cap 03/012.jpg", "Chapter 3/…", "c003/…").
+ * Página solta na raiz do ZIP não tem capítulo.
+ */
+export function capituloDe(nomeDaEntrada = '') {
+  const pasta = nomeDaEntrada.split('/').slice(0, -1).pop();
+  if (!pasta) return null;
+  const achado = pasta.match(/(?:cap(?:[íi]tulo)?|ch(?:apter)?|c)[\s._-]*0*(\d+)/i) || pasta.match(/0*(\d+)(?!.*\d)/);
+  return achado ? Number(achado[1]) : null;
+}
+
+const CORES_DAS_MARCAS = { pressed: 'var(--color-pressed)', accent: 'var(--color-accent)' };
+
+/**
+ * Camada de marcas sobre a página: traços e círculos num SVG de 0 a 1 (traço com espessura
+ * real, em px), textos em HTML posicionados em %. Serve para o editor e para as miniaturas.
+ */
+export function camadaDeMarcas(marcas = [], { oculta = false } = {}) {
+  const vetores = marcas.map((m, i) => {
+    const cor = CORES_DAS_MARCAS[m.cor] || CORES_DAS_MARCAS.pressed;
+    const estilo = `stroke:${cor};stroke-width:${Number(m.espessura) || 3}px`;
+    if (m.tipo === 'caneta' && m.pontos?.length) {
+      const d = m.pontos.map(([x, y], k) => `${k ? 'L' : 'M'}${x.toFixed(4)} ${y.toFixed(4)}`).join('');
+      return `<path class="marca" data-marca="${i}" d="${d}" style="${estilo}"/>`;
+    }
+    if (m.tipo === 'circulo') {
+      return `<ellipse class="marca" data-marca="${i}" cx="${(m.x + m.w / 2).toFixed(4)}" cy="${(m.y + m.h / 2).toFixed(4)}" rx="${(m.w / 2).toFixed(4)}" ry="${(m.h / 2).toFixed(4)}" style="${estilo}"/>`;
+    }
+    return '';
+  }).join('');
+  const textos = marcas.map((m, i) => (m.tipo === 'texto'
+    ? `<span class="marca-texto" data-marca="${i}" style="left:${(m.x * 100).toFixed(2)}%;top:${(m.y * 100).toFixed(2)}%">${esc(m.texto)}</span>`
+    : '')).join('');
+  return `<div class="marcas"${oculta ? ' hidden' : ''}>
+    <svg class="marcas__vetores" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">${vetores}</svg>${textos}
+  </div>`;
+}
+
 /** Componente "Estante / Mangá": capa, série, volume, estado e o botão ⋯. */
 export function cartaoDeVolume(v, { favorito = false, pulsar = false } = {}) {
   const nome = `${v.serie}, volume ${doisDigitos(v.numero)}`;

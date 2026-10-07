@@ -19,10 +19,6 @@ const ZOOM_MAXIMO = 4;
 const DICA_MS = 3000;
 const SAIDA_MS = 180;
 
-const EM_BREVE = {
-  anotar: 'As anotações chegam na etapa 4.',
-};
-
 let aberto = null;
 
 export const leitorAberto = () => Boolean(aberto);
@@ -80,7 +76,9 @@ function modelo(v, total, controlesVisiveis) {
  * `aoFechar(id)` é chamado depois que a camada sai; `aoConcluir(id, proximoId, automatico)`,
  * quando a leitura passa da última página. `continuacao`: aberto pelo próximo volume automático.
  */
-export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {}, aoConcluir = () => {}, continuacao = false }) {
+export async function abrirLeitor(id, {
+  raiz, avisar, aoFechar = () => {}, aoConcluir = () => {}, aoAnotar = () => {}, continuacao = false, pagina = null,
+}) {
   const v = volume(id);
   if (!v || aberto) return;
   aberto = { id }; // reserva já: um segundo toque durante a abertura não abre outro leitor
@@ -100,6 +98,8 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {}, aoCon
   let modoAtual = null;
   // Lido ou nunca aberto começa do início; em leitura, volta à página salva
   let indice = v.pagina >= 1 && v.pagina < total ? v.pagina - 1 : 0;
+  // "Ler página" (lista de anotações) abre direto na página pedida
+  if (pagina >= 1 && pagina <= total) indice = pagina - 1;
   const mostrarDica = !estado.dicaDeDirecaoVista;
   let controles = !mostrarDica;
   const zoom = { s: 1, x: 0, y: 0 };
@@ -693,7 +693,7 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {}, aoCon
       else zerarZoom({ animar: true });
     } else if (acao === 'opcoes') abrirOpcoes();
     else if (acao === 'concluir') concluir();
-    else if (EM_BREVE[acao]) avisar(EM_BREVE[acao]);
+    else if (acao === 'anotar') aoAnotar(v.id, indice + 1);
   });
 
   camada.addEventListener('keydown', (evento) => {

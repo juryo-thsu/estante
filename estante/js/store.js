@@ -242,6 +242,25 @@ export function definirPreferenciaDaSerie(serie, campo, valor) {
   avisar('preferencias');
 }
 
+// ---------- Anotações ----------
+// Uma anotação por página: { pagina, capitulo, pageId, marcas, observacao, criadaEm, editadaEm }.
+// As marcas ficam em coordenadas de 0 a 1 sobre a página, numa camada separada: o original não muda.
+
+export function anotacaoDa(id, pagina) {
+  return volume(id)?.anotacoes?.find((a) => a.pagina === pagina) || null;
+}
+
+/** Grava a anotação da página; sem marcas nem observação, a anotação sai. */
+export function salvarAnotacao(id, anotacao) {
+  const v = volume(id);
+  if (!v) return;
+  const outras = (v.anotacoes || []).filter((a) => a.pagina !== anotacao.pagina);
+  const temConteudo = anotacao.marcas.length > 0 || anotacao.observacao.trim() !== '';
+  v.anotacoes = (temConteudo ? [...outras, anotacao] : outras).sort((a, b) => a.pagina - b.pagina);
+  persistir(v);
+  avisar('anotacoes');
+}
+
 /** O volume seguinte da mesma série que está no aparelho (para o fim do volume). */
 export function proximoVolume(v) {
   const serie = chaveDaSerie(v.serie);

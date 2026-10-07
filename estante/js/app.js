@@ -12,6 +12,8 @@ import { renderImportar } from './views/importar.js';
 import { renderDados } from './views/dados.js';
 import { renderInstalar } from './views/instalar.js';
 import { renderGerenciar } from './views/gerenciar.js';
+import { renderAnotacoes, carregarMiniaturas, soltarMiniaturas } from './views/anotacoes.js';
+import { abrirEditor } from './views/editor.js';
 import { abrirFolha, folhaAberta } from './views/folha.js';
 import { abrirLeitor } from './views/leitor.js';
 import { renderBrinde } from './views/brinde.js';
@@ -25,9 +27,9 @@ const aviso = document.getElementById('aviso');
 const seletor = document.getElementById('seletor');
 const seletorBackup = document.getElementById('seletor-backup');
 
-const DESTINOS = ['biblioteca', 'favoritos', 'ajustes', 'importar', 'dados', 'instalar', 'gerenciar'];
+const DESTINOS = ['biblioteca', 'favoritos', 'ajustes', 'importar', 'dados', 'instalar', 'gerenciar', 'anotacoes'];
 // Telas cheias, com voltar e ação embaixo no lugar da navegação inferior (como no Figma)
-const TELAS_CHEIAS = ['importar', 'dados', 'instalar', 'gerenciar'];
+const TELAS_CHEIAS = ['importar', 'dados', 'instalar', 'gerenciar', 'anotacoes'];
 const TOQUE_LONGO = 400; // ms, como na especificação
 
 const ui = {
@@ -37,6 +39,9 @@ const ui = {
   recemFavoritados: new Set(), // para o pulso do coração ao abrir Favoritos
   voltarDaInstalacao: 'dados', // "Instalar app" abre de Dados e app ou da importação
   confirmandoRemocao: false, // "Gerenciar volumes": o primeiro toque em Remover só pede confirmação
+  buscaAnotacoes: '',
+  anotacaoSalva: false, // faixa "Anotação salva" no topo da lista
+  grupoAnotacoes: null, // volume para mostrar ao abrir a lista (vindo da folha de ações)
 };
 
 // ---------- Tema ----------
@@ -92,6 +97,8 @@ function render({ manterRolagem = true } = {}) {
     tela.innerHTML = renderInstalar();
   } else if (ui.destino === 'gerenciar') {
     tela.innerHTML = renderGerenciar({ confirmando: ui.confirmandoRemocao });
+  } else if (ui.destino === 'anotacoes') {
+    tela.innerHTML = renderAnotacoes({ busca: ui.buscaAnotacoes, salva: ui.anotacaoSalva });
   } else if (ui.destino === 'favoritos') {
     tela.innerHTML = renderFavoritos({ recemFavoritados: ui.recemFavoritados });
     ui.recemFavoritados = new Set();
@@ -108,6 +115,16 @@ function render({ manterRolagem = true } = {}) {
   if (manterRolagem && nova && nova.dataset.rolagem === chave) nova.scrollTop = topo;
   restaurarCampos();
 
+  if (ui.destino === 'anotacoes') {
+    carregarMiniaturas(tela);
+    if (ui.grupoAnotacoes) {
+      tela.querySelector(`[data-grupo="${CSS.escape(ui.grupoAnotacoes)}"]`)?.scrollIntoView({ block: 'start' });
+      ui.grupoAnotacoes = null;
+    }
+  } else {
+    soltarMiniaturas();
+  }
+
   for (const botao of nav.querySelectorAll('[data-destino]')) {
     if (botao.dataset.destino === ui.destino) botao.setAttribute('aria-current', 'page');
     else botao.removeAttribute('aria-current');
@@ -119,6 +136,10 @@ function ir(destino) {
   const mudou = destino !== ui.destino;
   // O resultado do backup vale só enquanto a pessoa está em Dados e app
   if (ui.destino === 'dados' && destino !== 'dados' && destino !== 'gerenciar') estado.avisoDeDados = null;
+  if (ui.destino === 'anotacoes' && destino !== 'anotacoes') {
+    ui.anotacaoSalva = false;
+    ui.buscaAnotacoes = '';
+  }
   ui.destino = destino;
   ui.ocultoAgora = null;
   ui.concluido = null;
@@ -162,9 +183,23 @@ function avisar(texto) {
   avisoTimer = setTimeout(() => delete aviso.dataset.visivel, 2400);
 }
 
-const EM_BREVE = {
-  anotacoes: 'As anotações chegam em uma próxima etapa.',
-};
+// ---------- Anotações ----------
+
+/** Abre o editor. Vindo da lista, volta para ela com "Anotação salva"; vindo do leitor, volta ao leitor. */
+function anotar(id, pagina, { daLista = false } = {}) {
+  abrirEditor(id, pagina, {
+    raiz: app,
+    avisar,
+    aoSalvar() {
+      if (daLista) {
+        ui.anotacaoSalva = true;
+        render();
+      } else {
+        avisar('Anotação salva · original preservado');
+      }
+    },
+  });
+}
 
 // ---------- Importação ----------
 
@@ -220,7 +255,7 @@ function fimDoBrinde() {
   render({ manterRolagem: false });
 }
 
-function abrirVolume(id, { continuacao = false } = {}) {
+function abrirVolume(id, { continuacao = false, pagina = null } = {}) {
   const v = volume(id);
   if (!v) return;
   if (!v.temArquivo) {
@@ -233,7 +268,9 @@ function abrirVolume(id, { continuacao = false } = {}) {
     raiz: app,
     avisar,
     continuacao,
+    pagina,
     aoConcluir: concluirVolume,
+    aoAnotar: (idDoVolume, paginaAtual) => anotar(idDoVolume, paginaAtual),
     aoFechar(idDoVolume) {
       render();
       // O foco volta para a capa do volume lido (a tela foi redesenhada com o progresso novo)
@@ -343,8 +380,9 @@ function abrirAcoes(id) {
         render({ manterRolagem: false });
       } else if (acao === 'remover') {
         removerDoAparelho(idDoVolume);
-      } else if (EM_BREVE[acao]) {
-        avisar(EM_BREVE[acao]);
+      } else if (acao === 'anotacoes') {
+        ui.grupoAnotacoes = idDoVolume;
+        ir('anotacoes');
       }
     },
   });
@@ -418,6 +456,9 @@ tela.addEventListener('click', (evento) => {
     alternarParaRemover(id);
   } else if (acao === 'remover-marcados') removerMarcados();
   else if (acao === 'exportar-backup') exportarBackup();
+  else if (acao === 'anotacoes') ir('anotacoes');
+  else if (acao === 'editar-anotacao') anotar(id, Number(alvo.dataset.pagina), { daLista: ui.destino === 'anotacoes' });
+  else if (acao === 'ler-pagina') abrirVolume(id, { pagina: Number(alvo.dataset.pagina) });
   else if (acao === 'importar-backup') seletorBackup.click();
   else if (acao === 'filtro') definirFiltro(alvo.dataset.filtro);
   else if (acao === 'ordenar') proximaOrdem();
@@ -428,7 +469,6 @@ tela.addEventListener('click', (evento) => {
     ui.ocultoAgora = null;
     definirOculto(id, false);
   } else if (acao === 'em-breve') avisar(alvo.dataset.oQue);
-  else if (EM_BREVE[acao]) avisar(EM_BREVE[acao]);
 });
 
 tela.addEventListener('submit', (evento) => {
@@ -441,10 +481,14 @@ tela.addEventListener('submit', (evento) => {
 
 tela.addEventListener('input', (evento) => {
   if (evento.target.id === 'busca') definirBusca(evento.target.value);
+  if (evento.target.id === 'busca-anotacoes') {
+    ui.buscaAnotacoes = evento.target.value;
+    render();
+  }
 });
 
 tela.addEventListener('keydown', (evento) => {
-  if (evento.target.id === 'busca' && evento.key === 'Enter') evento.target.blur();
+  if ((evento.target.id === 'busca' || evento.target.id === 'busca-anotacoes') && evento.key === 'Enter') evento.target.blur();
 });
 
 nav.addEventListener('click', (evento) => {

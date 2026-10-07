@@ -28,6 +28,12 @@
 .icone--sliders-horizontal { -webkit-mask-image: url("../assets/icons/sliders-horizontal.svg"); mask-image: url("../assets/icons/sliders-horizontal.svg"); }
 .icone--pen { -webkit-mask-image: url("../assets/icons/pen.svg"); mask-image: url("../assets/icons/pen.svg"); }
 .icone--check { -webkit-mask-image: url("../assets/icons/check.svg"); mask-image: url("../assets/icons/check.svg"); }
+.icone--olho { -webkit-mask-image: url("../assets/icons/olho.svg"); mask-image: url("../assets/icons/olho.svg"); }
+.icone--circulo { -webkit-mask-image: url("../assets/icons/circulo.svg"); mask-image: url("../assets/icons/circulo.svg"); }
+.icone--texto { -webkit-mask-image: url("../assets/icons/texto.svg"); mask-image: url("../assets/icons/texto.svg"); }
+.icone--borracha { -webkit-mask-image: url("../assets/icons/borracha.svg"); mask-image: url("../assets/icons/borracha.svg"); }
+.icone--desfazer { -webkit-mask-image: url("../assets/icons/desfazer.svg"); mask-image: url("../assets/icons/desfazer.svg"); }
+.icone--refazer { -webkit-mask-image: url("../assets/icons/refazer.svg"); mask-image: url("../assets/icons/refazer.svg"); }
 .icone--anel-girando { -webkit-mask-image: url("../assets/icons/anel-girando.svg"); mask-image: url("../assets/icons/anel-girando.svg"); }
 .icone--16 { width: 16px; height: 16px; }
 .icone--20 { width: 20px; height: 20px; }
@@ -220,6 +226,39 @@
 .selecao__detalhe {
   color: var(--color-muted);
   font: var(--t-small);
+}
+
+/* ---------- Camada de marcas (anotações) ----------
+   Fica por cima da página, do mesmo tamanho dela; a página em si nunca é alterada. */
+.marcas {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  pointer-events: none;
+}
+.marcas__vetores {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.marca {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+/* O texto acompanha o tamanho da página: 12 px numa página de 300 px */
+.marca-texto {
+  position: absolute;
+  max-width: 70cqw;
+  padding: 0.5em 0.9em;
+  border-radius: var(--radius-4);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: 400 4cqw/1.4 var(--font-ui);
+  transform: translate(-50%, -50%);
 }
 
 /* ---------- Campo de texto ---------- */

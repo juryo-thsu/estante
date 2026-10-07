@@ -10,6 +10,14 @@ import { tipoDaImagem } from './importacao.js';
 const ANTES = 1;
 const DEPOIS = 2;
 
+/** Uma página só, fora do leitor (editor de anotações e miniaturas). Devolve um object URL. */
+export async function extrairPagina(v, i) {
+  const arquivo = await lerArquivo(v.id);
+  const entrada = v.paginasDoArquivo?.[i];
+  if (!arquivo || !entrada) throw new Error('Página sem arquivo no aparelho');
+  return URL.createObjectURL(await lerEntrada(arquivo, entrada, tipoDaImagem(entrada.nome)));
+}
+
 export async function abrirPaginas(v) {
   const arquivo = await lerArquivo(v.id);
   const entradas = v.paginasDoArquivo;

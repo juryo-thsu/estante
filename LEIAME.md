@@ -50,10 +50,11 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Os SVGs de `assets/icons/` são os exportados do Figma, sem alteração. A cor é aplicada por máscara no CSS, para seguir o tema.
 - `js/store.js` guarda o estado e o que fica salvo no aparelho. As telas em `js/views/` só leem do store e devolvem HTML; os toques são tratados em `js/app.js`.
 - `js/db.js` é o IndexedDB: a loja `volumes` (série, progresso, marcas, miniatura da capa, índice das páginas) e a loja `arquivos` (o CBZ/ZIP original, na mesma chave). Remover do aparelho apaga só a segunda.
-- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-4a-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
+- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-4b-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
 - `js/offline.js` registra o service worker e pergunta a ele se o cache está completo, para mostrar "Pronto para usar offline" em Ajustes → Dados, armazenamento e backup. No Live Server (`127.0.0.1`) o service worker fica desligado, para cada recarga mostrar o código editado; para testar o offline no computador, abra `http://127.0.0.1:5500/?offline`.
 - `js/armazenamento.js` lê o espaço usado e a cota (`navigator.storage.estimate`) e a persistência (`persisted`/`persist`) para a tela Dados e app.
 - `js/paginas.js` extrai as páginas do CBZ guardado para o leitor, só numa janela em volta da atual (uma antes, duas depois); o resto tem o object URL revogado. `js/views/leitor.js` é o leitor: uma camada sobre o app que troca só a imagem e os textos a cada página.
+- `js/views/editor.js` é o editor de anotações (camada sobre o app e o leitor) e `js/views/anotacoes.js` a lista "Anotações". As marcas são desenhadas por `camadaDeMarcas` em `js/ui.js`, igual no editor e nas miniaturas.
 - `js/zip.js` é o leitor de ZIP; `js/importacao.js` valida o arquivo, ordena as páginas, gera a miniatura e deduz série e volume pelo nome.
 - Nomes de classes, funções e comentários em português.
 
@@ -62,7 +63,7 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 1. **Estante, Favoritos, Ajustes, temas e folha de ações** (feita).
 2. Importação de CBZ/ZIP, armazenamento, instalação e uso offline, em três partes: 2a importar e guardar, 2b instalar e usar offline e 2c armazenamento (entregues, em teste no iPhone).
 3. Leitor, em três partes: 3a ler, 3b zoom e opções por série, 3c fim do volume, página dupla e tela ligada (entregues, em teste no iPhone).
-4. Em duas partes: 4a gestão de espaço e backup (entregue, em teste no iPhone); 4b anotações.
+4. Em duas partes: 4a gestão de espaço e backup, 4b anotações (entregues, em teste no iPhone).
 
 ## Decisões tomadas onde o Figma não definia
 
@@ -92,7 +93,6 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Leitor: abre com os controles visíveis, exceto na primeira leitura, que mostra a dica de direção por 3 s com os controles escondidos. A dica aparece uma vez só, para o app todo.
 - Leitor: volume lido ou nunca aberto começa da página 1; em leitura, volta à página salva. O progresso é salvo a cada página.
 - Leitor: o slider pula para a página só ao soltar (arrastar mostra o número, sem extrair cada página do caminho). O slider vai sempre da esquerda para a direita, mesmo em mangá, como no Figma.
-- Leitor: Anotar avisa que chega na etapa 4.
 - Título do volume no leitor em Lora Bold, como no Figma (fonte nova, OFL, em `assets/fonts`).
 - Opções de leitura por série (direção, modo, preto puro, sépia) ficam no localStorage junto do tema, com a série sem diferença de maiúsculas. Série nova lê da direita para a esquerda, em páginas.
 - Preto puro: fundo #000 (`--color-pureBlack`, igual nos dois temas) e a página com brilho a 85%, como no frame "preto puro e brilho suave". Sépia: filtro sépia de 35% na página. O Figma não tem controle de brilho separado; os dois botões ligam e desligam cada um.
@@ -111,3 +111,10 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Gerenciar volumes: abre com os volumes concluídos já marcados (são os que liberam espaço sem perder nada); o cartão inteiro marca e desmarca. "Remover" pede um segundo toque, como na folha de ações. Só aparecem volumes com arquivo no aparelho.
 - Backup JSON (`versao: 1`): progresso, lido em, favorito, oculto, marcadores, anotações e as opções por série. Nunca os CBZ nem as capas. No iPhone, "Exportar JSON" abre a folha de compartilhar ("Salvar em Arquivos"); no computador, baixa o arquivo `estante-backup-AAAA-MM-DD.json`.
 - Restaurar: confere `app` e `versao` (versão mais nova é recusada) e acha cada volume pelo ID ou, se o app foi reinstalado, pela série e número. Volume que não está no aparelho entra como "Arquivo removido", com o progresso; ao importar o CBZ, ele volta com tudo. O resultado ("Backup pronto", "Backup restaurado", "Backup não restaurado") aparece no topo de Dados e app enquanto a pessoa está lá.
+- Anotações: uma por página, guardada no próprio volume (`anotacoes`), com página, capítulo, `pageId` (nome da página dentro do ZIP), marcas e observação. As marcas ficam em coordenadas de 0 a 1 sobre a página e numa camada separada; a imagem original nunca muda. A cor é guardada pelo nome (`pressed` ou `accent`), então segue o tema.
+- Capítulo: vem da pasta da página dentro do ZIP ("Cap 02/…", "Chapter 3/…", "c003/…"). Página solta na raiz do ZIP não tem capítulo, e a anotação mostra só volume e página.
+- Editor: Caneta (traço livre), Círculo (arrastar de um canto ao outro), Texto (toca, escreve, Enter) e Borracha (toca ou arrasta sobre a marca). Espessura alterna 2, 3 e 5 px. "Ver original" esconde as marcas (vira "Mostrar marcas"). Salvar sem marcas nem observação apaga a anotação da página.
+- Editor aberto pelo leitor volta para o leitor com o aviso "Anotação salva · original preservado"; aberto pela lista, volta para a lista com a faixa do Figma.
+- O leitor não desenha as anotações sobre a página, como nos frames do leitor no Figma; elas aparecem no editor e nas miniaturas da lista.
+- Lista "Anotações": junta páginas anotadas e páginas marcadas (Marcar, da 3b); página só marcada aparece como "Página marcada" com "Anotar" e "Ler página". Abre pela estante (Anotações), pela folha de ações (vai direto para o volume) e por Ajustes. A aba "Estante" volta para a biblioteca. "Anotar página atual" usa o volume em leitura (ou o último lido) e a página salva.
+- Miniaturas da lista: extraídas do CBZ só com a tela aberta e soltas ao sair. Volume sem arquivo mostra "Sem arquivo" e não deixa editar.
