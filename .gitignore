@@ -1,1 +1,7 @@
 .claude/settings.local.json
+
+# Só no PC de J: contexto do Claude, conexão com o Figma, especificação e a cópia da etapa 1
+CLAUDE.md
+.mcp.json
+docs/
+entregas/

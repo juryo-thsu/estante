@@ -12,11 +12,11 @@ Tsukina/
 │  ├─ css/         tokens (temas), base, components, screens, fonts
 │  ├─ js/          app, store, ui, db, zip, importacao e uma tela por arquivo em views/
 │  └─ assets/      ícones (SVG do Figma), fontes e ícones do app
-├─ docs/           especificação e direção visual copiadas do Figma
-├─ entregas/       cópia da etapa 1; as entregas seguintes viram tags do git
+├─ docs/           especificação e direção visual copiadas do Figma (só no PC)
+├─ entregas/       cópia da etapa 1; as entregas seguintes viram tags do git (só no PC)
 ├─ .vscode/        configuração do editor e do Live Server
-├─ CLAUDE.md       contexto e convenções para o Claude Code
-├─ .mcp.json       conexão do Claude Code com o Figma
+├─ CLAUDE.md       contexto e convenções para o Claude Code (só no PC)
+├─ .mcp.json       conexão do Claude Code com o Figma (só no PC)
 └─ LEIAME.md
 ```
 
