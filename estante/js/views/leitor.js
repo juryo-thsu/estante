@@ -1,21 +1,24 @@
-// "Leitor de mangá" (parte 3a): página, toques laterais e central, deslizar, controles com fade,
-// slider de pérolas e progresso salvo. É uma camada sobre o app, como a folha de ações:
-// a cada página troca só a imagem e os textos, sem redesenhar a tela.
+// "Leitor de mangá": página ou rolagem vertical, toques laterais e central, deslizar, pinça e
+// toque duplo, controles com fade, slider de pérolas, marcador, opções por série e progresso salvo.
+// É uma camada sobre o app, como a folha de ações: a cada página troca só a imagem e os
+// textos, sem redesenhar a tela.
 
-import { estado, volume, salvarPagina, direcaoDaSerie, marcarDicaDeDirecaoVista } from '../store.js';
+import {
+  estado, volume, salvarPagina, preferenciasDaSerie, definirPreferenciaDaSerie, alternarMarcador, marcarDicaDeDirecaoVista,
+} from '../store.js';
 import { esc, nomeLongo, icone } from '../ui.js';
 import { abrirPaginas } from '../paginas.js';
+import { renderOpcoes } from './opcoes.js';
 
 const ZONA_LATERAL = 0.35; // 137,55 de 393 no Figma, de cada lado; o centro alterna os controles
 const DESLIZE_MINIMO = 40; // px na horizontal para virar a página deslizando
 const TOQUE_MAXIMO = 10; // px de folga para ainda contar como toque
+const TOQUE_DUPLO_MS = 250;
+const ZOOM_MAXIMO = 4;
 const DICA_MS = 3000;
 const SAIDA_MS = 180;
 
 const EM_BREVE = {
-  marcar: 'Marcar página chega na parte 3b.',
-  ajustar: 'Zoom e Ajustar à tela chegam na parte 3b.',
-  opcoes: 'As opções de leitura chegam na parte 3b.',
   anotar: 'As anotações chegam na etapa 4.',
 };
 
@@ -23,14 +26,17 @@ let aberto = null;
 
 export const leitorAberto = () => Boolean(aberto);
 
-function modelo(v, total, direcao, controlesVisiveis) {
+const limitar = (valor, minimo, maximo) => Math.min(maximo, Math.max(minimo, valor));
+const formatarZoom = (s) => (Math.round(s * 10) / 10).toLocaleString('pt-BR');
+
+function modelo(v, total, controlesVisiveis) {
   const fase = controlesVisiveis ? 'visivel' : 'oculto';
-  const avancar = direcao === 'rtl' ? 'Esquerda' : 'Direita';
   const perolas = Array.from({ length: 7 }, (_, i) => `<span class="leitor-slider__perola" style="--i:${i}"></span>`).join('');
   return `<div class="leitor__pagina">
       <img class="leitor__imagem" alt="" draggable="false">
       <p class="leitor__erro" hidden>Não deu para abrir esta página.</p>
     </div>
+    <div class="leitor__rolo"></div>
     <div class="leitor__toques" aria-hidden="true"></div>
 
     <header class="leitor__topo leitor__ui" data-fase="${fase}">
@@ -42,7 +48,7 @@ function modelo(v, total, direcao, controlesVisiveis) {
     </header>
 
     <div class="leitor__base leitor__ui" data-fase="${fase}">
-      <p class="leitor__dica-toque">Centro: controles · ${avancar}: avançar</p>
+      <p class="leitor__dica-toque"></p>
       <div class="leitor__controles">
         <div class="leitor__posicao">
           <p class="leitor__pagina-atual"></p>
@@ -55,7 +61,7 @@ function modelo(v, total, direcao, controlesVisiveis) {
           <svg class="leitor-slider__pingente" viewBox="0 0 8 10" aria-hidden="true"><path d="M4 0L8 5L4 10L0 5L4 0Z"/></svg>
         </div>
         <div class="leitor__ferramentas">
-          <button class="ferramenta" type="button" data-leitor="marcar">${icone('pin', 16)}<span>Marcar</span></button>
+          <button class="ferramenta ferramenta--marcar" type="button" data-leitor="marcar" aria-pressed="false">${icone('pin', 16)}<span class="ferramenta__rotulo">Marcar</span></button>
           <button class="ferramenta" type="button" data-leitor="ajustar">${icone('maximize', 16)}<span>Ajustar à tela</span></button>
           <button class="ferramenta" type="button" data-leitor="opcoes">${icone('sliders-horizontal', 16)}<span>Opções</span></button>
           <button class="ferramenta ferramenta--anotar" type="button" data-leitor="anotar">${icone('pen', 20)}<span>Anotar</span></button>
@@ -63,7 +69,8 @@ function modelo(v, total, direcao, controlesVisiveis) {
       </div>
     </div>
 
-    <p class="leitor__aviso-direcao" role="status">${direcao === 'rtl' ? '← Avançar · leitura da direita para a esquerda' : 'Avançar → · leitura da esquerda para a direita'}</p>`;
+    <p class="leitor__aviso-direcao" role="status"></p>
+    <div class="leitor__opcoes" role="dialog" aria-label="Opções de leitura" tabindex="-1" hidden></div>`;
 }
 
 /**
@@ -86,11 +93,13 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
   }
 
   const total = paginas.total;
-  const direcao = direcaoDaSerie(v.serie);
+  let p = preferenciasDaSerie(v.serie);
+  let modoAtual = null;
   // Lido ou nunca aberto começa do início; em leitura, volta à página salva
   let indice = v.pagina >= 1 && v.pagina < total ? v.pagina - 1 : 0;
   const mostrarDica = !estado.dicaDeDirecaoVista;
   let controles = !mostrarDica;
+  const zoom = { s: 1, x: 0, y: 0 };
 
   const camada = document.createElement('div');
   camada.className = 'leitor';
@@ -98,16 +107,23 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
   camada.setAttribute('aria-modal', 'true');
   camada.setAttribute('aria-label', `Leitor: ${nomeLongo(v)}`);
   camada.tabIndex = -1;
-  camada.innerHTML = modelo(v, total, direcao, controles);
+  camada.innerHTML = modelo(v, total, controles);
 
   const $ = (seletor) => camada.querySelector(seletor);
+  const area = $('.leitor__pagina');
   const imagem = $('.leitor__imagem');
   const erro = $('.leitor__erro');
+  const rolo = $('.leitor__rolo');
   const toques = $('.leitor__toques');
   const slider = $('.leitor-slider');
   const textoPagina = $('.leitor__pagina-atual');
   const textoLido = $('.leitor__lido');
+  const lendo = $('.leitor__lendo');
+  const dicaToque = $('.leitor__dica-toque');
+  const botaoMarcar = $('[data-leitor="marcar"]');
+  const rotuloMarcar = $('.ferramenta__rotulo');
   const dica = $('.leitor__aviso-direcao');
+  const painelOpcoes = $('.leitor__opcoes');
   const partes = [...camada.querySelectorAll('.leitor__ui')];
 
   aberto = { id, camada };
@@ -118,33 +134,46 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     camada.focus({ preventScroll: true });
   });
 
-  // ---------- Posição e página ----------
+  // ---------- Posição ----------
 
   function mostrarPosicao(i) {
     const pagina = i + 1;
-    textoPagina.textContent = `Página ${pagina} de ${total}`;
+    const prefixo = zoom.s > 1.01 ? `Zoom ${formatarZoom(zoom.s)}× · ` : '';
+    textoPagina.textContent = `${prefixo}Página ${pagina} de ${total}`;
     textoLido.textContent = `${Math.round((pagina / total) * 100)}% lido`;
     slider.style.setProperty('--p', (pagina / total).toFixed(4));
     slider.setAttribute('aria-valuenow', pagina);
     slider.setAttribute('aria-valuetext', `Página ${pagina} de ${total}`);
+
+    const marcada = (volume(v.id)?.marcadores || []).includes(pagina);
+    lendo.textContent = marcada ? 'PÁGINA MARCADA' : 'LENDO AGORA';
+    rotuloMarcar.textContent = marcada ? 'Marcada' : 'Marcar';
+    botaoMarcar.setAttribute('aria-pressed', String(marcada));
   }
 
+  function registrar(i) {
+    indice = i;
+    mostrarPosicao(i);
+    salvarPagina(v.id, i + 1);
+  }
+
+  // ---------- Modo páginas ----------
+
   let ultimoPedido = 0;
-  async function irPara(i) {
-    indice = Math.max(0, Math.min(total - 1, i));
+  async function mostrarPagina(i) {
+    if (zoom.s !== 1) zerarZoom();
+    registrar(i);
     const pedido = ++ultimoPedido;
-    mostrarPosicao(indice);
-    salvarPagina(v.id, indice + 1);
-    paginas.manterPerto(indice);
+    paginas.manterPerto(i);
     try {
-      const url = await paginas.url(indice);
+      const url = await paginas.url(i);
       // Decodifica antes de trocar, para a página nova não aparecer pela metade
       const previa = new Image();
       previa.src = url;
       await previa.decode().catch(() => {});
-      if (pedido !== ultimoPedido || !aberto) return;
+      if (pedido !== ultimoPedido || !aberto || modoAtual !== 'paginas') return;
       imagem.src = url;
-      imagem.alt = `Página ${indice + 1} de ${total}`;
+      imagem.alt = `Página ${i + 1} de ${total}`;
       imagem.hidden = false;
       erro.hidden = true;
     } catch (falha) {
@@ -155,6 +184,92 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     }
   }
 
+  // ---------- Modo rolagem vertical ----------
+  // Só as páginas perto da tela ficam carregadas; ao sair, a imagem e o object URL são soltos.
+
+  let observadorCarga = null;
+  let observadorCentro = null;
+
+  async function carregarFolha(folha) {
+    const i = Number(folha.dataset.i);
+    const img = folha.firstElementChild;
+    try {
+      const url = await paginas.url(i);
+      if (folha.dataset.perto !== 'sim' || !rolo.contains(folha)) return;
+      img.src = url;
+      await img.decode().catch(() => {});
+      // Fixa a proporção real para a rolagem não pular quando a imagem sair
+      if (img.naturalWidth) folha.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
+    } catch (falha) {
+      console.error(falha);
+    }
+  }
+
+  async function montarRolo() {
+    // A proporção da página atual vale de palpite para as que ainda não carregaram
+    try {
+      const previa = new Image();
+      previa.src = await paginas.url(indice);
+      await previa.decode();
+      if (previa.naturalWidth) rolo.style.setProperty('--proporcao', `${previa.naturalWidth} / ${previa.naturalHeight}`);
+    } catch {
+      // Sem a prévia fica a proporção padrão do CSS
+    }
+    if (modoAtual !== 'vertical' || !aberto) return;
+
+    rolo.innerHTML = Array.from({ length: total }, (_, i) => `<div class="leitor__folha" data-i="${i}">
+      <img alt="Página ${i + 1} de ${total}" draggable="false"></div>`).join('');
+
+    observadorCarga = new IntersectionObserver((entradas) => {
+      for (const entrada of entradas) {
+        const folha = entrada.target;
+        if (entrada.isIntersecting) {
+          folha.dataset.perto = 'sim';
+          carregarFolha(folha);
+        } else if (folha.dataset.perto === 'sim') {
+          folha.dataset.perto = 'nao';
+          folha.firstElementChild.removeAttribute('src');
+          paginas.soltar(Number(folha.dataset.i));
+        }
+      }
+    }, { root: rolo, rootMargin: '100% 0px' });
+
+    // A página atual é a que está cruzando a linha do meio da tela
+    observadorCentro = new IntersectionObserver((entradas) => {
+      for (const entrada of entradas) {
+        const i = Number(entrada.target.dataset.i);
+        if (entrada.isIntersecting && i !== indice) registrar(i);
+      }
+    }, { root: rolo, rootMargin: '-50% 0px -50% 0px' });
+
+    for (const folha of rolo.children) {
+      observadorCarga.observe(folha);
+      observadorCentro.observe(folha);
+    }
+    rolo.children[indice]?.scrollIntoView({ block: 'start' });
+    registrar(indice);
+  }
+
+  function desmontarRolo() {
+    observadorCarga?.disconnect();
+    observadorCentro?.disconnect();
+    observadorCarga = observadorCentro = null;
+    for (const folha of rolo.children) if (folha.dataset.perto === 'sim') paginas.soltar(Number(folha.dataset.i));
+    rolo.innerHTML = '';
+  }
+
+  // ---------- Navegação comum aos dois modos ----------
+
+  function irPara(i) {
+    const alvo = limitar(i, 0, total - 1);
+    if (modoAtual === 'vertical') {
+      rolo.children[alvo]?.scrollIntoView({ block: 'start' });
+      registrar(alvo);
+    } else {
+      mostrarPagina(alvo);
+    }
+  }
+
   function avancar() {
     if (indice < total - 1) irPara(indice + 1);
     else avisar('Você chegou ao fim do volume.');
@@ -162,6 +277,32 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
 
   function voltar() {
     if (indice > 0) irPara(indice - 1);
+  }
+
+  // ---------- Preferências da série ----------
+
+  function aplicarPreferencias() {
+    p = preferenciasDaSerie(v.serie);
+    camada.dataset.modo = p.modo;
+    camada.toggleAttribute('data-preto-puro', p.pretoPuro);
+    camada.toggleAttribute('data-sepia', p.sepia);
+    dicaToque.textContent = `Centro: controles · ${p.direcao === 'rtl' ? 'Esquerda' : 'Direita'}: avançar`;
+    dica.textContent = p.direcao === 'rtl'
+      ? '← Avançar · leitura da direita para a esquerda'
+      : 'Avançar → · leitura da esquerda para a direita';
+
+    if (p.modo === modoAtual) return;
+    const anterior = modoAtual;
+    modoAtual = p.modo;
+    if (anterior === 'vertical') desmontarRolo();
+    if (p.modo === 'vertical') {
+      zerarZoom();
+      imagem.removeAttribute('src');
+      paginas.manterPerto(indice);
+      montarRolo();
+    } else {
+      mostrarPagina(indice);
+    }
   }
 
   // ---------- Controles com fade ----------
@@ -191,35 +332,155 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     dicaTimer = setTimeout(esconderDica, DICA_MS);
   }
 
-  // ---------- Toques e deslize na página ----------
+  // ---------- Zoom (modo páginas) ----------
 
-  let inicio = null;
-  toques.addEventListener('pointerdown', (evento) => {
-    if (!evento.isPrimary) return;
-    inicio = { x: evento.clientX, y: evento.clientY };
-  });
-  toques.addEventListener('pointercancel', () => { inicio = null; });
-  toques.addEventListener('pointerup', (evento) => {
-    if (!inicio || !evento.isPrimary) return;
-    const dx = evento.clientX - inicio.x;
-    const dy = evento.clientY - inicio.y;
-    inicio = null;
+  /** Ponto da tela relativo ao centro da página, que é a origem do zoom. */
+  function relativo(x, y) {
+    const caixa = area.getBoundingClientRect();
+    return { x: x - (caixa.left + caixa.width / 2), y: y - (caixa.top + caixa.height / 2) };
+  }
+
+  function aplicarZoom({ animar = false } = {}) {
+    // A imagem ampliada pode ir até a borda da tela, não além
+    const tela = camada.getBoundingClientRect();
+    const limiteX = Math.max(0, (imagem.offsetWidth * zoom.s - tela.width) / 2);
+    const limiteY = Math.max(0, (imagem.offsetHeight * zoom.s - tela.height) / 2);
+    zoom.x = limitar(zoom.x, -limiteX, limiteX);
+    zoom.y = limitar(zoom.y, -limiteY, limiteY);
+    imagem.classList.toggle('leitor__imagem--animando', animar);
+    imagem.style.transform = zoom.s === 1 ? '' : `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.s})`;
+    camada.toggleAttribute('data-com-zoom', zoom.s > 1);
+    mostrarPosicao(indice);
+  }
+
+  function zoomEm(s, foco, opcoes) {
+    const anterior = zoom.s;
+    zoom.s = limitar(s, 1, ZOOM_MAXIMO);
+    // O ponto sob o dedo (ou o toque) continua no mesmo lugar depois do zoom
+    zoom.x = foco.x - ((foco.x - zoom.x) * zoom.s) / anterior;
+    zoom.y = foco.y - ((foco.y - zoom.y) * zoom.s) / anterior;
+    aplicarZoom(opcoes);
+  }
+
+  function zerarZoom(opcoes) {
+    zoom.s = 1;
+    zoom.x = 0;
+    zoom.y = 0;
+    aplicarZoom(opcoes);
+  }
+
+  // ---------- Gestos na página ----------
+
+  const ponteiros = new Map();
+  let gesto = null;
+  let toquePendente = null;
+
+  const distancia = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const meio = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+  function tocar(x, y) {
     esconderDica();
+    const caixa = toques.getBoundingClientRect();
+    const fracao = (x - caixa.left) / caixa.width;
 
-    const paraFrente = direcao === 'rtl' ? 1 : -1;
-    if (Math.abs(dx) >= DESLIZE_MINIMO && Math.abs(dx) > Math.abs(dy) * 1.2) {
-      // O deslize segue a direção: no mangá, puxar para a direita traz a próxima página
-      if (Math.sign(dx) === paraFrente) avancar();
-      else voltar();
+    if (fracao < ZONA_LATERAL || fracao > 1 - ZONA_LATERAL) {
+      const esquerda = fracao < ZONA_LATERAL;
+      (esquerda === (p.direcao === 'rtl') ? avancar : voltar)();
       return;
     }
-    if (Math.abs(dx) > TOQUE_MAXIMO || Math.abs(dy) > TOQUE_MAXIMO) return;
 
-    const caixa = toques.getBoundingClientRect();
-    const fracao = (evento.clientX - caixa.left) / caixa.width;
-    if (fracao < ZONA_LATERAL) (direcao === 'rtl' ? avancar : voltar)();
-    else if (fracao > 1 - ZONA_LATERAL) (direcao === 'rtl' ? voltar : avancar)();
-    else definirControles(!controles);
+    // Centro: espera um instante para saber se é toque duplo (zoom) ou simples (controles)
+    if (toquePendente && Math.hypot(x - toquePendente.x, y - toquePendente.y) < 40) {
+      clearTimeout(toquePendente.timer);
+      toquePendente = null;
+      if (zoom.s > 1) zerarZoom({ animar: true });
+      else zoomEm(2, relativo(x, y), { animar: true });
+      return;
+    }
+    toquePendente = {
+      x,
+      y,
+      timer: setTimeout(() => {
+        toquePendente = null;
+        definirControles(!controles);
+      }, TOQUE_DUPLO_MS),
+    };
+  }
+
+  toques.addEventListener('pointerdown', (evento) => {
+    ponteiros.set(evento.pointerId, { x: evento.clientX, y: evento.clientY });
+    if (ponteiros.size === 2) {
+      const [a, b] = ponteiros.values();
+      const centro = meio(a, b);
+      gesto = { tipo: 'pinca', d0: distancia(a, b) || 1, s0: zoom.s, f0: relativo(centro.x, centro.y), x0: zoom.x, y0: zoom.y };
+    } else if (ponteiros.size === 1) {
+      gesto = { tipo: 'toque', x: evento.clientX, y: evento.clientY, x0: zoom.x, y0: zoom.y };
+    }
+  });
+
+  toques.addEventListener('pointermove', (evento) => {
+    if (!ponteiros.has(evento.pointerId)) return;
+    ponteiros.set(evento.pointerId, { x: evento.clientX, y: evento.clientY });
+
+    if (gesto?.tipo === 'pinca' && ponteiros.size >= 2) {
+      const [a, b] = ponteiros.values();
+      const centro = meio(a, b);
+      const f = relativo(centro.x, centro.y);
+      zoom.s = limitar((gesto.s0 * distancia(a, b)) / gesto.d0, 1, ZOOM_MAXIMO);
+      zoom.x = f.x - ((gesto.f0.x - gesto.x0) * zoom.s) / gesto.s0;
+      zoom.y = f.y - ((gesto.f0.y - gesto.y0) * zoom.s) / gesto.s0;
+      aplicarZoom();
+    } else if (gesto?.tipo === 'toque' && zoom.s > 1) {
+      // Com zoom, arrastar move a imagem (e não vira a página)
+      zoom.x = gesto.x0 + evento.clientX - gesto.x;
+      zoom.y = gesto.y0 + evento.clientY - gesto.y;
+      aplicarZoom();
+    }
+  });
+
+  function fimDoPonteiro(evento, cancelado) {
+    if (!ponteiros.delete(evento.pointerId)) return;
+    if (gesto?.tipo === 'pinca') {
+      if (ponteiros.size === 0) {
+        gesto = null;
+        if (zoom.s < 1.05) zerarZoom({ animar: true });
+      }
+      return;
+    }
+    const atual = gesto;
+    gesto = null;
+    if (cancelado || atual?.tipo !== 'toque') return;
+
+    const dx = evento.clientX - atual.x;
+    const dy = evento.clientY - atual.y;
+    const parado = Math.abs(dx) <= TOQUE_MAXIMO && Math.abs(dy) <= TOQUE_MAXIMO;
+    if (zoom.s > 1 && !parado) return; // foi arrasto da imagem
+
+    if (zoom.s === 1 && Math.abs(dx) >= DESLIZE_MINIMO && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      esconderDica();
+      // O deslize segue a direção: no mangá, puxar para a direita traz a próxima página
+      (Math.sign(dx) === (p.direcao === 'rtl' ? 1 : -1) ? avancar : voltar)();
+      return;
+    }
+    if (parado) tocar(evento.clientX, evento.clientY);
+  }
+  toques.addEventListener('pointerup', (evento) => fimDoPonteiro(evento, false));
+  toques.addEventListener('pointercancel', (evento) => fimDoPonteiro(evento, true));
+  // Safari antigo trata a pinça como zoom da página inteira
+  camada.addEventListener('gesturestart', (evento) => evento.preventDefault());
+
+  // Rolagem vertical: o rolo rola sozinho; um toque parado alterna os controles
+  let toqueNoRolo = null;
+  rolo.addEventListener('pointerdown', (evento) => {
+    toqueNoRolo = { x: evento.clientX, y: evento.clientY };
+  });
+  rolo.addEventListener('pointercancel', () => { toqueNoRolo = null; });
+  rolo.addEventListener('pointerup', (evento) => {
+    if (!toqueNoRolo) return;
+    const parado = Math.hypot(evento.clientX - toqueNoRolo.x, evento.clientY - toqueNoRolo.y) <= TOQUE_MAXIMO;
+    toqueNoRolo = null;
+    esconderDica();
+    if (parado) definirControles(!controles);
   });
 
   // ---------- Slider de pérolas ----------
@@ -227,8 +488,8 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
   let arrastando = false;
   function indiceNoSlider(evento) {
     const caixa = slider.getBoundingClientRect();
-    const fracao = Math.min(1, Math.max(0, (evento.clientX - caixa.left) / caixa.width));
-    return Math.min(total - 1, Math.max(0, Math.round(fracao * total) - 1));
+    const fracao = limitar((evento.clientX - caixa.left) / caixa.width, 0, 1);
+    return limitar(Math.round(fracao * total) - 1, 0, total - 1);
   }
   slider.addEventListener('pointerdown', (evento) => {
     arrastando = true;
@@ -238,13 +499,12 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
   slider.addEventListener('pointermove', (evento) => {
     if (arrastando) mostrarPosicao(indiceNoSlider(evento));
   });
-  const soltarSlider = (evento) => {
+  slider.addEventListener('pointerup', (evento) => {
     if (!arrastando) return;
     arrastando = false;
     // Só ao soltar a página é extraída: arrastar não descompacta cada página do caminho
     irPara(indiceNoSlider(evento));
-  };
-  slider.addEventListener('pointerup', soltarSlider);
+  });
   slider.addEventListener('pointercancel', () => {
     arrastando = false;
     mostrarPosicao(indice);
@@ -259,6 +519,49 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     evento.stopPropagation();
   });
 
+  // ---------- Opções de leitura ----------
+
+  function desenharOpcoes() {
+    const rolagem = painelOpcoes.querySelector('.rolagem');
+    const topo = rolagem?.scrollTop ?? 0;
+    painelOpcoes.innerHTML = renderOpcoes(v.serie, p);
+    painelOpcoes.querySelector('.rolagem').scrollTop = topo;
+  }
+
+  function abrirOpcoes() {
+    p = preferenciasDaSerie(v.serie);
+    desenharOpcoes();
+    painelOpcoes.hidden = false;
+    requestAnimationFrame(() => {
+      painelOpcoes.dataset.aberto = '';
+      painelOpcoes.focus({ preventScroll: true });
+    });
+  }
+
+  function fecharOpcoes(depois) {
+    delete painelOpcoes.dataset.aberto;
+    setTimeout(() => {
+      painelOpcoes.hidden = true;
+      painelOpcoes.innerHTML = '';
+      aplicarPreferencias();
+      camada.focus({ preventScroll: true });
+      depois?.();
+    }, SAIDA_MS);
+  }
+
+  painelOpcoes.addEventListener('click', (evento) => {
+    const alvo = evento.target.closest('[data-opcao]');
+    if (!alvo || alvo.disabled) return;
+    const { opcao, valor } = alvo.dataset;
+    if (opcao === 'fechar') return fecharOpcoes();
+    if (opcao === 'ver-zoom') return fecharOpcoes(() => zoomEm(2, { x: 0, y: 0 }, { animar: true }));
+    if (opcao === 'direcao' || opcao === 'modo') definirPreferenciaDaSerie(v.serie, opcao, valor);
+    else if (opcao === 'pretoPuro' || opcao === 'sepia') definirPreferenciaDaSerie(v.serie, opcao, !p[opcao]);
+    p = preferenciasDaSerie(v.serie);
+    desenharOpcoes();
+    painelOpcoes.querySelector(`[data-opcao="${opcao}"][aria-pressed="true"]`)?.focus({ preventScroll: true });
+  });
+
   // ---------- Botões e teclado ----------
 
   camada.addEventListener('click', (evento) => {
@@ -266,13 +569,26 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     if (!alvo) return;
     const acao = alvo.dataset.leitor;
     if (acao === 'fechar') fechar();
+    else if (acao === 'marcar') {
+      alternarMarcador(v.id, indice + 1);
+      mostrarPosicao(indice);
+    } else if (acao === 'ajustar') {
+      if (modoAtual === 'vertical') avisar('O zoom fica no modo Páginas.');
+      else zerarZoom({ animar: true });
+    } else if (acao === 'opcoes') abrirOpcoes();
     else if (EM_BREVE[acao]) avisar(EM_BREVE[acao]);
   });
 
   camada.addEventListener('keydown', (evento) => {
+    if (!painelOpcoes.hidden) {
+      if (evento.key === 'Escape') fecharOpcoes();
+      return;
+    }
+    const paraEsquerda = p.direcao === 'rtl' ? avancar : voltar;
+    const paraDireita = p.direcao === 'rtl' ? voltar : avancar;
     if (evento.key === 'Escape') fechar();
-    else if (evento.key === 'ArrowLeft') (direcao === 'rtl' ? avancar : voltar)();
-    else if (evento.key === 'ArrowRight') (direcao === 'rtl' ? voltar : avancar)();
+    else if (evento.key === 'ArrowLeft') paraEsquerda();
+    else if (evento.key === 'ArrowRight') paraDireita();
     else if (evento.key === ' ') definirControles(!controles);
     else return;
     evento.preventDefault();
@@ -282,6 +598,8 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     if (aberto?.camada !== camada) return;
     aberto = null;
     clearTimeout(dicaTimer);
+    clearTimeout(toquePendente?.timer);
+    desmontarRolo();
     paginas.fechar();
     delete camada.dataset.aberto;
     camada.style.pointerEvents = 'none';
@@ -292,5 +610,5 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     }, SAIDA_MS);
   }
 
-  irPara(indice);
+  aplicarPreferencias();
 }

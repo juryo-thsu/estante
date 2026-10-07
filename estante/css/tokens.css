@@ -18,6 +18,8 @@
   --color-actionPressed: #5c1b2e;
   --color-rose: #c093a2;
   --color-pearl: #e5d9c7;
+  /* Fundo do leitor em "Preto puro" (igual nos dois temas) */
+  --color-pureBlack: #000000;
 
   --space-4: 4px;
   --space-8: 8px;

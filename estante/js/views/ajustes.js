@@ -20,7 +20,7 @@ export function renderAjustes() {
         ${tema('noite', 'Noite', 'Metal e bordô')}
         ${tema('morango', 'Morango', 'Creme e rosa')}
       </div>
-      <button class="botao botao--secundario" type="button" data-acao="em-breve" data-o-que="As preferências de leitura chegam com o leitor.">Preferências de leitura</button>
+      <button class="botao botao--secundario" type="button" data-acao="em-breve" data-o-que="As preferências ficam em cada série: abra um volume e toque em Opções.">Preferências de leitura</button>
       <button class="botao botao--secundario" type="button" data-acao="ir" data-destino="dados">Dados, armazenamento e backup</button>
       <button class="botao botao--secundario" type="button" data-acao="anotacoes">Páginas e anotações</button>
       <p class="ajustes__nota">Animações curtas · respeita movimento reduzido</p>

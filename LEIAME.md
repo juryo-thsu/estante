@@ -50,7 +50,7 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Os SVGs de `assets/icons/` são os exportados do Figma, sem alteração. A cor é aplicada por máscara no CSS, para seguir o tema.
 - `js/store.js` guarda o estado e o que fica salvo no aparelho. As telas em `js/views/` só leem do store e devolvem HTML; os toques são tratados em `js/app.js`.
 - `js/db.js` é o IndexedDB: a loja `volumes` (série, progresso, marcas, miniatura da capa, índice das páginas) e a loja `arquivos` (o CBZ/ZIP original, na mesma chave). Remover do aparelho apaga só a segunda.
-- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-3a-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
+- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-3b-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
 - `js/offline.js` registra o service worker e pergunta a ele se o cache está completo, para mostrar "Pronto para usar offline" em Ajustes → Dados, armazenamento e backup. No Live Server (`127.0.0.1`) o service worker fica desligado, para cada recarga mostrar o código editado; para testar o offline no computador, abra `http://127.0.0.1:5500/?offline`.
 - `js/armazenamento.js` lê o espaço usado e a cota (`navigator.storage.estimate`) e a persistência (`persisted`/`persist`) para a tela Dados e app.
 - `js/paginas.js` extrai as páginas do CBZ guardado para o leitor, só numa janela em volta da atual (uma antes, duas depois); o resto tem o object URL revogado. `js/views/leitor.js` é o leitor: uma camada sobre o app que troca só a imagem e os textos a cada página.
@@ -61,7 +61,7 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 
 1. **Estante, Favoritos, Ajustes, temas e folha de ações** (feita).
 2. Importação de CBZ/ZIP, armazenamento, instalação e uso offline, em três partes: 2a importar e guardar, 2b instalar e usar offline e 2c armazenamento (entregues, em teste no iPhone).
-3. Leitor, em três partes: 3a ler (entregue, em teste no iPhone); 3b zoom e opções por série; 3c fim do volume, página dupla e tela ligada.
+3. Leitor, em três partes: 3a ler e 3b zoom e opções por série (entregues, em teste no iPhone); 3c fim do volume, página dupla e tela ligada.
 4. Anotações, backup e gestão de espaço.
 
 ## Decisões tomadas onde o Figma não definia
@@ -93,6 +93,11 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Leitor: abre com os controles visíveis, exceto na primeira leitura, que mostra a dica de direção por 3 s com os controles escondidos. A dica aparece uma vez só, para o app todo.
 - Leitor: volume lido ou nunca aberto começa da página 1; em leitura, volta à página salva. O progresso é salvo a cada página.
 - Leitor: o slider pula para a página só ao soltar (arrastar mostra o número, sem extrair cada página do caminho). O slider vai sempre da esquerda para a direita, mesmo em mangá, como no Figma.
-- Leitor: avançar na última página mostra "Você chegou ao fim do volume." até o brinde e o próximo volume da 3c. Marcar, Ajustar à tela e Opções avisam que chegam na 3b; Anotar, na etapa 4.
-- Leitor: até as opções por série (3b), todo volume lê da direita para a esquerda.
+- Leitor: avançar na última página mostra "Você chegou ao fim do volume." até o brinde e o próximo volume da 3c. Anotar avisa que chega na etapa 4.
 - Título do volume no leitor em Lora Bold, como no Figma (fonte nova, OFL, em `assets/fonts`).
+- Opções de leitura por série (direção, modo, preto puro, sépia) ficam no localStorage junto do tema, com a série sem diferença de maiúsculas. Série nova lê da direita para a esquerda, em páginas.
+- Preto puro: fundo #000 (`--color-pureBlack`, igual nos dois temas) e a página com brilho a 85%, como no frame "preto puro e brilho suave". Sépia: filtro sépia de 35% na página. O Figma não tem controle de brilho separado; os dois botões ligam e desligam cada um.
+- Zoom só no modo Páginas, de 1× a 4×. O toque duplo funciona no centro da página (o toque simples no centro espera 250 ms para saber se vem o segundo); nas laterais o toque vira a página na hora, mesmo com zoom. Virar a página volta para 1×.
+- Rolagem vertical: as páginas carregam quando chegam perto da tela (uma tela de margem) e são soltas quando se afastam; um toque parado alterna os controles. "Ver zoom 2×" fica desligado nesse modo.
+- Ferramenta do leitor: o Figma mostra "Marcar" em uns frames e "Páginas" em outros; ficou "Marcar" (o frame principal). A lista de páginas marcadas entra com "Páginas e anotações" (etapa 4).
+- Ajustes → Preferências de leitura explica que as preferências ficam em cada série (Opções, dentro do leitor).

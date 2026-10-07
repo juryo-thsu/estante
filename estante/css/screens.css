@@ -504,6 +504,12 @@
   max-width: 100%;
   max-height: 100%;
 }
+.leitor__imagem {
+  transform-origin: center;
+}
+.leitor__imagem--animando {
+  transition: transform var(--motion-in) var(--ease);
+}
 .leitor__erro {
   color: var(--color-muted);
   font: var(--t-small);
@@ -693,6 +699,99 @@
   opacity: 0;
   transform: translateY(32px);
   transition: none;
+}
+
+/* Rolagem vertical: as páginas empilhadas rolam por baixo das barras */
+.leitor__rolo {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  gap: var(--space-16);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: calc(var(--sat) + 116px) var(--gutter) calc(var(--sab) + 140px);
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+.leitor__folha {
+  flex: none;
+  width: 100%;
+  aspect-ratio: var(--proporcao, 0.7);
+}
+.leitor__folha img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.leitor[data-modo="vertical"] .leitor__rolo {
+  display: flex;
+}
+.leitor[data-modo="vertical"] .leitor__pagina,
+.leitor[data-modo="vertical"] .leitor__toques,
+.leitor[data-modo="vertical"] .leitor__dica-toque {
+  display: none;
+}
+
+/* Conforto visual: preto puro (com brilho suave na página) e sépia */
+.leitor[data-preto-puro],
+.leitor[data-preto-puro] .leitor__topo,
+.leitor[data-preto-puro] .leitor__base {
+  background: var(--color-pureBlack);
+}
+.leitor[data-preto-puro] :is(.leitor__imagem, .leitor__folha img) {
+  filter: brightness(0.85);
+}
+.leitor[data-sepia] :is(.leitor__imagem, .leitor__folha img) {
+  filter: sepia(0.35);
+}
+.leitor[data-preto-puro][data-sepia] :is(.leitor__imagem, .leitor__folha img) {
+  filter: brightness(0.85) sepia(0.35);
+}
+
+.ferramenta--marcar[aria-pressed="true"] {
+  color: var(--color-accent);
+}
+
+/* Opções de leitura: tela cheia por cima do leitor */
+.leitor__opcoes {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--sat);
+  background: var(--color-background);
+  opacity: 0;
+  transition: opacity var(--motion-out) var(--ease);
+  touch-action: pan-y;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.leitor__opcoes:focus {
+  outline: none;
+}
+.leitor__opcoes[data-aberto] {
+  opacity: 1;
+  transition-duration: var(--motion-in);
+}
+.par-de-botoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+/* "Direita → esquerda" cabe em uma linha nos 152 px do Figma */
+.par-de-botoes .botao {
+  padding-inline: var(--space-8);
+  white-space: nowrap;
+}
+.pilha-de-botoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.leitor__opcoes .botao:disabled {
+  opacity: 0.45;
 }
 
 /* Dica da primeira leitura: some sozinha */

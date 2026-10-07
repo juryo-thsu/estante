@@ -51,11 +51,19 @@ export async function abrirPaginas(v) {
     }
   }
 
+  /** Solta uma página que saiu da tela (rolagem vertical). */
+  function soltar(i) {
+    const pedido = urls.get(i);
+    if (!pedido) return;
+    urls.delete(i);
+    revogar(pedido);
+  }
+
   function fechar() {
     fechado = true;
     for (const pedido of urls.values()) revogar(pedido);
     urls.clear();
   }
 
-  return { total: entradas.length, url, manterPerto, fechar };
+  return { total: entradas.length, url, manterPerto, soltar, fechar };
 }

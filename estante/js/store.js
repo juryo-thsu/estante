@@ -22,6 +22,8 @@ export const estado = {
   ordem: ['volume-asc', 'volume-desc', 'recentes'].includes(salvo.ordem) ? salvo.ordem : 'volume-asc',
   /** A dica "← Avançar · leitura da direita para a esquerda" aparece só na primeira leitura. */
   dicaDeDirecaoVista: salvo.dicaDeDirecaoVista === true,
+  /** Opções de leitura por série (chave: nome da série normalizado). */
+  series: salvo.series && typeof salvo.series === 'object' ? salvo.series : {},
   filtro: 'todos',
   busca: '',
   carregado: false,
@@ -36,7 +38,9 @@ export const estado = {
 
 function salvarPreferencias() {
   try {
-    localStorage.setItem(CHAVE, JSON.stringify({ tema: estado.tema, ordem: estado.ordem, dicaDeDirecaoVista: estado.dicaDeDirecaoVista }));
+    localStorage.setItem(CHAVE, JSON.stringify({
+      tema: estado.tema, ordem: estado.ordem, dicaDeDirecaoVista: estado.dicaDeDirecaoVista, series: estado.series,
+    }));
   } catch {
     // Sem armazenamento (aba privada, cota): o app segue funcionando, só não lembra.
   }
@@ -216,8 +220,35 @@ export function mostrarOcultos() {
 
 // ---------- Leitor ----------
 
-/** Direção de leitura da série. Até as opções por série (3b), todo volume lê como mangá. */
-export const direcaoDaSerie = () => 'rtl';
+// Padrão de toda série nova: mangá (direita para a esquerda), uma página por vez
+const PADRAO_DA_SERIE = { direcao: 'rtl', modo: 'paginas', pretoPuro: false, sepia: false, proximoAutomatico: true };
+const chaveDaSerie = (serie) => serie.trim().normalize('NFC').toLocaleLowerCase('pt-BR');
+
+export function preferenciasDaSerie(serie) {
+  return { ...PADRAO_DA_SERIE, ...estado.series[chaveDaSerie(serie)] };
+}
+
+export function definirPreferenciaDaSerie(serie, campo, valor) {
+  if (!(campo in PADRAO_DA_SERIE)) return;
+  const chave = chaveDaSerie(serie);
+  estado.series[chave] = { ...estado.series[chave], [campo]: valor };
+  salvarPreferencias();
+  avisar('preferencias');
+}
+
+/** Marca ou desmarca uma página (de 1 a `paginas`). Devolve se ficou marcada. */
+export function alternarMarcador(id, pagina) {
+  const v = volume(id);
+  if (!v) return false;
+  const marcadores = new Set(v.marcadores || []);
+  const marcada = !marcadores.has(pagina);
+  if (marcada) marcadores.add(pagina);
+  else marcadores.delete(pagina);
+  v.marcadores = [...marcadores].sort((a, b) => a - b);
+  persistir(v);
+  avisar('progresso');
+  return marcada;
+}
 
 /** Página atual (de 1 a `paginas`) ao virar a página no leitor. */
 export function salvarPagina(id, pagina) {

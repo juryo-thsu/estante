@@ -128,7 +128,7 @@ assinar((motivo) => {
   }
   if (motivo === 'importacao' && !importando()) garantirPersistencia();
   // Virar página não redesenha a estante (escondida atrás do leitor); ela é redesenhada ao fechar
-  if (motivo === 'progresso') return;
+  if (motivo === 'progresso' || motivo === 'preferencias') return;
   if (motivo === 'busca') {
     const colecao = document.getElementById('colecao');
     if (colecao) colecao.innerHTML = renderColecao();
