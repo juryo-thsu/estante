@@ -471,8 +471,9 @@
 }
 
 /* ---------- Leitor de mangá ---------- */
+/* Fixo na janela (e não na coluna de 480 px do app): deitado, o leitor usa a largura toda */
 .leitor {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 15;
   overflow: hidden;
@@ -794,6 +795,86 @@
   opacity: 0.45;
 }
 
+/* Fim da rolagem vertical */
+.leitor__fim {
+  flex: none;
+  padding-top: var(--space-8);
+}
+
+/* Página dupla: a primeira do par fica à direita no mangá */
+.leitor[data-dupla] .leitor__pagina {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-12);
+}
+.leitor[data-dupla][data-direcao="ltr"] .leitor__pagina {
+  flex-direction: row;
+}
+.leitor[data-dupla] .leitor__imagem {
+  max-width: calc(50% - 6px);
+}
+
+/* Deitado: cabeçalho de uma linha e só a posição embaixo, como em "página dupla em paisagem".
+   Slider, ferramentas e opções ficam para a leitura em pé. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .leitor:not([data-modo="vertical"]) {
+    --lateral-esquerda: max(44px, env(safe-area-inset-left, 0px));
+    --lateral-direita: max(44px, env(safe-area-inset-right, 0px));
+  }
+  .leitor:not([data-modo="vertical"]) .leitor__pagina {
+    inset: 56px var(--lateral-direita) calc(30px + var(--sab)) var(--lateral-esquerda);
+  }
+  .leitor:not([data-modo="vertical"]) .leitor__topo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    height: 56px;
+    padding: 0 var(--lateral-direita) 0 var(--lateral-esquerda);
+  }
+  .leitor:not([data-modo="vertical"]) .leitor__navegacao {
+    height: auto;
+    padding: 0;
+  }
+  .leitor:not([data-modo="vertical"]) .leitor__voltar {
+    min-width: 44px;
+  }
+  .leitor:not([data-modo="vertical"]) .leitor__voltar span:not(.icone) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .leitor:not([data-modo="vertical"]) :is(.leitor__lendo, .leitor__dica-toque, .leitor-slider, .leitor__ferramentas, .leitor__lido) {
+    display: none;
+  }
+  .leitor:not([data-modo="vertical"]) .leitor__titulo {
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    font: var(--t-section);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .leitor:not([data-modo="vertical"]) .leitor__controles {
+    justify-content: center;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .leitor:not([data-modo="vertical"]) .leitor__posicao {
+    justify-content: center;
+  }
+  .leitor:not([data-modo="vertical"]) .leitor__pagina-atual {
+    color: var(--color-muted);
+    font: var(--t-small);
+  }
+}
+
 /* Dica da primeira leitura: some sozinha */
 .leitor__aviso-direcao {
   position: absolute;
@@ -818,13 +899,80 @@
   transition-duration: var(--motion-in);
 }
 
+/* ---------- Volume concluído — brinde ---------- */
+.brinde {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-20);
+  padding: 80px var(--gutter) 32px;
+}
+.brinde__copos {
+  position: relative;
+  align-self: stretch;
+  height: 88px;
+}
+.brinde__copo {
+  position: absolute;
+  width: 36px;
+  height: 66px;
+}
+/* Os copos se aproximam, encostam e voltam um pouco: o brinde dura 1 s */
+.brinde__copo--esquerdo {
+  top: 4px;
+  left: calc(50% - 36px);
+  transform: rotate(-8deg);
+  animation: brinde-esquerdo 1s var(--ease) both;
+}
+.brinde__copo--direito {
+  top: 9px;
+  left: 50%;
+  transform: rotate(8deg);
+  animation: brinde-direito 1s var(--ease) both;
+}
+@keyframes brinde-esquerdo {
+  0% { transform: translateX(-44px) rotate(-8deg); }
+  60% { transform: translateX(2px) rotate(-8deg); }
+  75% { transform: translateX(-4px) rotate(-8deg); }
+  100% { transform: rotate(-8deg); }
+}
+@keyframes brinde-direito {
+  0% { transform: translateX(44px) rotate(8deg); }
+  60% { transform: translateX(-2px) rotate(8deg); }
+  75% { transform: translateX(4px) rotate(8deg); }
+  100% { transform: rotate(8deg); }
+}
+.brinde__titulo {
+  font: var(--t-section);
+}
+.brinde__volume {
+  color: var(--color-muted);
+}
+.brinde__texto {
+  align-self: stretch;
+  color: var(--color-muted);
+}
+.brinde__voltar {
+  min-height: 44px;
+  color: var(--color-accent);
+  font: var(--t-body);
+}
+
 /* Movimento reduzido: o anel não gira, só respira (fade) */
+@keyframes aparecer {
+  from { opacity: 0; }
+}
 @keyframes respiro {
   50% { opacity: 0.4; }
 }
 @media (prefers-reduced-motion: reduce) {
   .carregando__simbolo .icone {
     animation: respiro 1.2s linear infinite;
+  }
+  /* Brinde: os copos aparecem no lugar */
+  .brinde__copo--esquerdo,
+  .brinde__copo--direito {
+    animation: aparecer var(--motion-in) linear both;
   }
   /* Controles do leitor: só fade, sem deslocamento */
   .leitor__ui,

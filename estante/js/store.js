@@ -221,7 +221,9 @@ export function mostrarOcultos() {
 // ---------- Leitor ----------
 
 // Padrão de toda série nova: mangá (direita para a esquerda), uma página por vez
-const PADRAO_DA_SERIE = { direcao: 'rtl', modo: 'paginas', pretoPuro: false, sepia: false, proximoAutomatico: true };
+const PADRAO_DA_SERIE = {
+  direcao: 'rtl', modo: 'paginas', pretoPuro: false, sepia: false, telaAcesa: false, proximoAutomatico: true,
+};
 const chaveDaSerie = (serie) => serie.trim().normalize('NFC').toLocaleLowerCase('pt-BR');
 
 export function preferenciasDaSerie(serie) {
@@ -234,6 +236,14 @@ export function definirPreferenciaDaSerie(serie, campo, valor) {
   estado.series[chave] = { ...estado.series[chave], [campo]: valor };
   salvarPreferencias();
   avisar('preferencias');
+}
+
+/** O volume seguinte da mesma série que está no aparelho (para o fim do volume). */
+export function proximoVolume(v) {
+  const serie = chaveDaSerie(v.serie);
+  return visiveis()
+    .filter((o) => o.temArquivo && chaveDaSerie(o.serie) === serie && o.numero > v.numero)
+    .sort((a, b) => a.numero - b.numero)[0];
 }
 
 /** Marca ou desmarca uma página (de 1 a `paginas`). Devolve se ficou marcada. */

@@ -12,6 +12,7 @@ import { renderDados } from './views/dados.js';
 import { renderInstalar } from './views/instalar.js';
 import { abrirFolha, folhaAberta } from './views/folha.js';
 import { abrirLeitor } from './views/leitor.js';
+import { renderBrinde } from './views/brinde.js';
 import { iniciarOffline } from './offline.js';
 import { atualizarArmazenamento, pedirPersistencia, garantirPersistencia } from './armazenamento.js';
 
@@ -29,6 +30,7 @@ const TOQUE_LONGO = 400; // ms, como na especificação
 const ui = {
   destino: DESTINOS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'biblioteca',
   ocultoAgora: null, // volume recém-oculto: a Biblioteca mostra a tela "Volume oculto"
+  concluido: null, // { id, proximoId, automatico }: a Biblioteca mostra o brinde
   recemFavoritados: new Set(), // para o pulso do coração ao abrir Favoritos
   voltarDaInstalacao: 'dados', // "Instalar app" abre de Dados e app ou da importação
 };
@@ -90,7 +92,10 @@ function render({ manterRolagem = true } = {}) {
   } else if (ui.destino === 'ajustes') {
     tela.innerHTML = renderAjustes();
   } else {
-    tela.innerHTML = renderEstante({ ocultoAgora: ui.ocultoAgora });
+    const concluido = ui.concluido && volume(ui.concluido.id);
+    tela.innerHTML = concluido
+      ? renderBrinde(concluido, ui.concluido.proximoId && volume(ui.concluido.proximoId), ui.concluido)
+      : renderEstante({ ocultoAgora: ui.ocultoAgora });
   }
 
   const nova = tela.querySelector('[data-rolagem]');
@@ -108,6 +113,7 @@ function ir(destino) {
   const mudou = destino !== ui.destino;
   ui.destino = destino;
   ui.ocultoAgora = null;
+  ui.concluido = null;
   if (location.hash.slice(1) !== destino) {
     try {
       history.replaceState(null, '', `#${destino}`);
@@ -184,16 +190,42 @@ async function removerDoAparelho(id) {
   }
 }
 
-function abrirVolume(id) {
+// O brinde dura 1 s; com o próximo volume automático, ele abre logo depois
+const BRINDE_MS = 1000;
+let brindeTimer;
+
+function concluirVolume(id, proximoId, automatico) {
+  clearTimeout(brindeTimer);
+  ui.destino = 'biblioteca';
+  ui.concluido = { id, proximoId, automatico: Boolean(automatico && proximoId) };
+  render({ manterRolagem: false });
+  if (ui.concluido.automatico) {
+    brindeTimer = setTimeout(() => {
+      if (ui.concluido?.id === id) abrirVolume(proximoId, { continuacao: true });
+    }, BRINDE_MS + 200);
+  }
+}
+
+function fimDoBrinde() {
+  clearTimeout(brindeTimer);
+  ui.concluido = null;
+  render({ manterRolagem: false });
+}
+
+function abrirVolume(id, { continuacao = false } = {}) {
   const v = volume(id);
   if (!v) return;
   if (!v.temArquivo) {
     avisar('Importe o CBZ ou ZIP de novo para ler este volume.');
     return;
   }
+  clearTimeout(brindeTimer);
+  ui.concluido = null;
   abrirLeitor(id, {
     raiz: app,
     avisar,
+    continuacao,
+    aoConcluir: concluirVolume,
     aoFechar(idDoVolume) {
       render();
       // O foco volta para a capa do volume lido (a tela foi redesenhada com o progresso novo)
@@ -273,6 +305,8 @@ tela.addEventListener('click', (evento) => {
 
   if (acao === 'acoes') abrirAcoes(id);
   else if (acao === 'abrir') abrirVolume(id);
+  else if (acao === 'abrir-proximo') abrirVolume(id, { continuacao: true });
+  else if (acao === 'fim-do-brinde') fimDoBrinde();
   else if (acao === 'adicionar') ir('importar');
   else if (acao === 'escolher-arquivos') escolherArquivos();
   else if (acao === 'sair-importacao') sairDaImportacao();

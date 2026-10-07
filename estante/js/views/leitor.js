@@ -5,6 +5,7 @@
 
 import {
   estado, volume, salvarPagina, preferenciasDaSerie, definirPreferenciaDaSerie, alternarMarcador, marcarDicaDeDirecaoVista,
+  proximoVolume,
 } from '../store.js';
 import { esc, nomeLongo, icone } from '../ui.js';
 import { abrirPaginas } from '../paginas.js';
@@ -34,6 +35,7 @@ function modelo(v, total, controlesVisiveis) {
   const perolas = Array.from({ length: 7 }, (_, i) => `<span class="leitor-slider__perola" style="--i:${i}"></span>`).join('');
   return `<div class="leitor__pagina">
       <img class="leitor__imagem" alt="" draggable="false">
+      <img class="leitor__imagem leitor__imagem--par" alt="" draggable="false" hidden>
       <p class="leitor__erro" hidden>Não deu para abrir esta página.</p>
     </div>
     <div class="leitor__rolo"></div>
@@ -75,9 +77,10 @@ function modelo(v, total, controlesVisiveis) {
 
 /**
  * Abre o volume no leitor. `avisar(texto)` mostra o aviso curto do app;
- * `aoFechar(id)` é chamado depois que a camada sai.
+ * `aoFechar(id)` é chamado depois que a camada sai; `aoConcluir(id, proximoId, automatico)`,
+ * quando a leitura passa da última página. `continuacao`: aberto pelo próximo volume automático.
  */
-export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
+export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {}, aoConcluir = () => {}, continuacao = false }) {
   const v = volume(id);
   if (!v || aberto) return;
   aberto = { id }; // reserva já: um segundo toque durante a abertura não abre outro leitor
@@ -100,6 +103,10 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
   const mostrarDica = !estado.dicaDeDirecaoVista;
   let controles = !mostrarDica;
   const zoom = { s: 1, x: 0, y: 0 };
+  let continuou = continuacao; // "Você continuou no próximo volume" até a primeira virada
+  // Página dupla só faz sentido deitado; em pé, "Dupla em paisagem" lê uma página por vez
+  const paisagem = matchMedia('(orientation: landscape) and (max-height: 600px)');
+  const dupla = () => p.modo === 'dupla' && paisagem.matches;
 
   const camada = document.createElement('div');
   camada.className = 'leitor';
@@ -112,6 +119,7 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
   const $ = (seletor) => camada.querySelector(seletor);
   const area = $('.leitor__pagina');
   const imagem = $('.leitor__imagem');
+  const imagemPar = $('.leitor__imagem--par');
   const erro = $('.leitor__erro');
   const rolo = $('.leitor__rolo');
   const toques = $('.leitor__toques');
@@ -136,10 +144,21 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
 
   // ---------- Posição ----------
 
+  // Pares da página dupla: a capa sozinha, depois 2–3, 4–5… (como 10–11 no Figma)
+  const inicioDoPar = (i) => (i === 0 ? 0 : i - ((i + 1) % 2));
+  const fimDoPar = (i) => (i === 0 ? 0 : Math.min(total - 1, inicioDoPar(i) + 1));
+  const ultimaVisivel = () => (dupla() ? fimDoPar(indice) : indice);
+
   function mostrarPosicao(i) {
     const pagina = i + 1;
     const prefixo = zoom.s > 1.01 ? `Zoom ${formatarZoom(zoom.s)}× · ` : '';
-    textoPagina.textContent = `${prefixo}Página ${pagina} de ${total}`;
+    if (dupla()) {
+      const fim = fimDoPar(i) + 1;
+      const doPar = fim > pagina ? `${pagina}–${fim}` : `${pagina}`;
+      textoPagina.textContent = `${doPar} de ${total} · ${p.direcao === 'rtl' ? 'Direita → esquerda' : 'Esquerda → direita'}`;
+    } else {
+      textoPagina.textContent = `${prefixo}Página ${pagina} de ${total}`;
+    }
     textoLido.textContent = `${Math.round((pagina / total) * 100)}% lido`;
     slider.style.setProperty('--p', (pagina / total).toFixed(4));
     slider.setAttribute('aria-valuenow', pagina);
@@ -149,32 +168,59 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     lendo.textContent = marcada ? 'PÁGINA MARCADA' : 'LENDO AGORA';
     rotuloMarcar.textContent = marcada ? 'Marcada' : 'Marcar';
     botaoMarcar.setAttribute('aria-pressed', String(marcada));
+
+    const lado = p.direcao === 'rtl' ? 'esquerda' : 'direita';
+    const naUltima = (dupla() ? fimDoPar(i) : i) === total - 1;
+    if (naUltima && modoAtual !== 'vertical') {
+      dicaToque.textContent = proximoVolume(volume(v.id))
+        ? `Próximo volume no aparelho · continue à ${lado}`
+        : `Fim do volume · continue à ${lado} para concluir`;
+    } else if (continuou) {
+      dicaToque.textContent = 'Você continuou no próximo volume';
+    } else {
+      dicaToque.textContent = `Centro: controles · ${lado[0].toUpperCase()}${lado.slice(1)}: avançar`;
+    }
   }
 
-  function registrar(i) {
+  function registrar(i, ultima = i) {
+    if (i !== indice) continuou = false;
     indice = i;
     mostrarPosicao(i);
-    salvarPagina(v.id, i + 1);
+    salvarPagina(v.id, ultima + 1);
   }
 
   // ---------- Modo páginas ----------
 
   let ultimoPedido = 0;
+  async function decodificada(i) {
+    const url = await paginas.url(i);
+    // Decodifica antes de trocar, para a página nova não aparecer pela metade
+    const previa = new Image();
+    previa.src = url;
+    await previa.decode().catch(() => {});
+    return url;
+  }
+
   async function mostrarPagina(i) {
     if (zoom.s !== 1) zerarZoom();
-    registrar(i);
+    const comPar = dupla();
+    const inicio = comPar ? inicioDoPar(i) : i;
+    const fim = comPar ? fimDoPar(i) : i;
+    registrar(inicio, fim);
     const pedido = ++ultimoPedido;
-    paginas.manterPerto(i);
+    paginas.manterPerto(fim);
     try {
-      const url = await paginas.url(i);
-      // Decodifica antes de trocar, para a página nova não aparecer pela metade
-      const previa = new Image();
-      previa.src = url;
-      await previa.decode().catch(() => {});
+      const [url, urlPar] = await Promise.all([decodificada(inicio), fim > inicio ? decodificada(fim) : null]);
       if (pedido !== ultimoPedido || !aberto || modoAtual !== 'paginas') return;
+      camada.toggleAttribute('data-dupla', comPar);
       imagem.src = url;
-      imagem.alt = `Página ${i + 1} de ${total}`;
+      imagem.alt = `Página ${inicio + 1} de ${total}`;
       imagem.hidden = false;
+      if (urlPar) {
+        imagemPar.src = urlPar;
+        imagemPar.alt = `Página ${fim + 1} de ${total}`;
+      }
+      imagemPar.hidden = !urlPar;
       erro.hidden = true;
     } catch (falha) {
       console.error(falha);
@@ -187,6 +233,7 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
   // ---------- Modo rolagem vertical ----------
   // Só as páginas perto da tela ficam carregadas; ao sair, a imagem e o object URL são soltos.
 
+  const folhas = () => rolo.querySelectorAll('.leitor__folha');
   let observadorCarga = null;
   let observadorCentro = null;
 
@@ -218,7 +265,8 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     if (modoAtual !== 'vertical' || !aberto) return;
 
     rolo.innerHTML = Array.from({ length: total }, (_, i) => `<div class="leitor__folha" data-i="${i}">
-      <img alt="Página ${i + 1} de ${total}" draggable="false"></div>`).join('');
+      <img alt="Página ${i + 1} de ${total}" draggable="false"></div>`).join('')
+      + '<div class="leitor__fim"><button class="botao" type="button" data-leitor="concluir">Concluir volume</button></div>';
 
     observadorCarga = new IntersectionObserver((entradas) => {
       for (const entrada of entradas) {
@@ -242,11 +290,11 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
       }
     }, { root: rolo, rootMargin: '-50% 0px -50% 0px' });
 
-    for (const folha of rolo.children) {
+    for (const folha of folhas()) {
       observadorCarga.observe(folha);
       observadorCentro.observe(folha);
     }
-    rolo.children[indice]?.scrollIntoView({ block: 'start' });
+    folhas()[indice]?.scrollIntoView({ block: 'start' });
     registrar(indice);
   }
 
@@ -254,7 +302,7 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     observadorCarga?.disconnect();
     observadorCentro?.disconnect();
     observadorCarga = observadorCentro = null;
-    for (const folha of rolo.children) if (folha.dataset.perto === 'sim') paginas.soltar(Number(folha.dataset.i));
+    for (const folha of folhas()) if (folha.dataset.perto === 'sim') paginas.soltar(Number(folha.dataset.i));
     rolo.innerHTML = '';
   }
 
@@ -263,7 +311,7 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
   function irPara(i) {
     const alvo = limitar(i, 0, total - 1);
     if (modoAtual === 'vertical') {
-      rolo.children[alvo]?.scrollIntoView({ block: 'start' });
+      folhas()[alvo]?.scrollIntoView({ block: 'start' });
       registrar(alvo);
     } else {
       mostrarPagina(alvo);
@@ -271,12 +319,25 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
   }
 
   function avancar() {
-    if (indice < total - 1) irPara(indice + 1);
-    else avisar('Você chegou ao fim do volume.');
+    const ultima = ultimaVisivel();
+    if (ultima < total - 1) irPara(ultima + 1);
+    else concluir();
   }
 
   function voltar() {
-    if (indice > 0) irPara(indice - 1);
+    if (indice > 0) irPara(dupla() ? inicioDoPar(indice - 1) : indice - 1);
+  }
+
+  /** Passou da última página: brinde e, se houver, o próximo volume. */
+  function concluir() {
+    // Não interrompe um zoom: o primeiro toque só volta a página inteira
+    if (zoom.s > 1) {
+      zerarZoom({ animar: true });
+      return;
+    }
+    salvarPagina(v.id, total);
+    const proximo = proximoVolume(volume(v.id));
+    fechar(() => aoConcluir(id, proximo?.id ?? null, p.proximoAutomatico));
   }
 
   // ---------- Preferências da série ----------
@@ -284,18 +345,26 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
   function aplicarPreferencias() {
     p = preferenciasDaSerie(v.serie);
     camada.dataset.modo = p.modo;
+    camada.dataset.direcao = p.direcao;
+    if (p.telaAcesa && !trava) pedirTelaAcesa();
+    else if (!p.telaAcesa) soltarTelaAcesa();
     camada.toggleAttribute('data-preto-puro', p.pretoPuro);
     camada.toggleAttribute('data-sepia', p.sepia);
-    dicaToque.textContent = `Centro: controles · ${p.direcao === 'rtl' ? 'Esquerda' : 'Direita'}: avançar`;
     dica.textContent = p.direcao === 'rtl'
       ? '← Avançar · leitura da direita para a esquerda'
       : 'Avançar → · leitura da esquerda para a direita';
 
-    if (p.modo === modoAtual) return;
+    const motor = p.modo === 'vertical' ? 'vertical' : 'paginas';
+    if (motor === modoAtual) {
+      // Páginas e Dupla usam o mesmo motor: só redesenha (par ou página única)
+      if (motor === 'paginas') mostrarPagina(indice);
+      else mostrarPosicao(indice);
+      return;
+    }
     const anterior = modoAtual;
-    modoAtual = p.modo;
+    modoAtual = motor;
     if (anterior === 'vertical') desmontarRolo();
-    if (p.modo === 'vertical') {
+    if (motor === 'vertical') {
       zerarZoom();
       imagem.removeAttribute('src');
       paginas.manterPerto(indice);
@@ -304,6 +373,39 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
       mostrarPagina(indice);
     }
   }
+
+  // ---------- Tela acesa (Wake Lock) ----------
+  // O iPhone solta a trava quando o app sai da tela: ao voltar, ela é pedida de novo.
+
+  let trava = null;
+  let situacaoTela = 'wakeLock' in navigator ? null : 'indisponivel';
+
+  async function pedirTelaAcesa() {
+    if (situacaoTela === 'indisponivel') return;
+    try {
+      trava = await navigator.wakeLock.request('screen');
+      situacaoTela = 'ativa';
+      trava.addEventListener('release', () => { trava = null; });
+    } catch {
+      situacaoTela = 'recusada';
+    }
+  }
+
+  function soltarTelaAcesa() {
+    trava?.release().catch(() => {});
+    trava = null;
+    if (situacaoTela === 'ativa') situacaoTela = null;
+  }
+
+  function aoVoltarAoApp() {
+    if (document.visibilityState === 'visible' && p.telaAcesa && !trava) pedirTelaAcesa();
+  }
+  document.addEventListener('visibilitychange', aoVoltarAoApp);
+
+  function aoGirar() {
+    if (modoAtual === 'paginas') mostrarPagina(indice);
+  }
+  paisagem.addEventListener('change', aoGirar);
 
   // ---------- Controles com fade ----------
 
@@ -389,6 +491,10 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
       return;
     }
 
+    if (dupla()) {
+      definirControles(!controles);
+      return;
+    }
     // Centro: espera um instante para saber se é toque duplo (zoom) ou simples (controles)
     if (toquePendente && Math.hypot(x - toquePendente.x, y - toquePendente.y) < 40) {
       clearTimeout(toquePendente.timer);
@@ -409,7 +515,7 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
 
   toques.addEventListener('pointerdown', (evento) => {
     ponteiros.set(evento.pointerId, { x: evento.clientX, y: evento.clientY });
-    if (ponteiros.size === 2) {
+    if (ponteiros.size === 2 && !dupla()) {
       const [a, b] = ponteiros.values();
       const centro = meio(a, b);
       gesto = { tipo: 'pinca', d0: distancia(a, b) || 1, s0: zoom.s, f0: relativo(centro.x, centro.y), x0: zoom.x, y0: zoom.y };
@@ -465,6 +571,8 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     if (parado) tocar(evento.clientX, evento.clientY);
   }
   toques.addEventListener('pointerup', (evento) => fimDoPonteiro(evento, false));
+  // Os toques do leitor não geram clique: ele cairia no que está por baixo ao concluir o volume
+  toques.addEventListener('touchend', (evento) => evento.preventDefault(), { passive: false });
   toques.addEventListener('pointercancel', (evento) => fimDoPonteiro(evento, true));
   // Safari antigo trata a pinça como zoom da página inteira
   camada.addEventListener('gesturestart', (evento) => evento.preventDefault());
@@ -524,7 +632,7 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
   function desenharOpcoes() {
     const rolagem = painelOpcoes.querySelector('.rolagem');
     const topo = rolagem?.scrollTop ?? 0;
-    painelOpcoes.innerHTML = renderOpcoes(v.serie, p);
+    painelOpcoes.innerHTML = renderOpcoes(v.serie, p, situacaoTela);
     painelOpcoes.querySelector('.rolagem').scrollTop = topo;
   }
 
@@ -555,8 +663,16 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     const { opcao, valor } = alvo.dataset;
     if (opcao === 'fechar') return fecharOpcoes();
     if (opcao === 'ver-zoom') return fecharOpcoes(() => zoomEm(2, { x: 0, y: 0 }, { animar: true }));
+    if (opcao === 'telaAcesa') {
+      if (valor !== 'tentar') definirPreferenciaDaSerie(v.serie, 'telaAcesa', !p.telaAcesa);
+      p = preferenciasDaSerie(v.serie);
+      if (!p.telaAcesa) soltarTelaAcesa();
+      // O pedido sai deste toque: o Safari só concede a trava com um gesto da pessoa
+      (p.telaAcesa ? pedirTelaAcesa() : Promise.resolve()).then(desenharOpcoes);
+      return;
+    }
     if (opcao === 'direcao' || opcao === 'modo') definirPreferenciaDaSerie(v.serie, opcao, valor);
-    else if (opcao === 'pretoPuro' || opcao === 'sepia') definirPreferenciaDaSerie(v.serie, opcao, !p[opcao]);
+    else if (['pretoPuro', 'sepia', 'proximoAutomatico'].includes(opcao)) definirPreferenciaDaSerie(v.serie, opcao, !p[opcao]);
     p = preferenciasDaSerie(v.serie);
     desenharOpcoes();
     painelOpcoes.querySelector(`[data-opcao="${opcao}"][aria-pressed="true"]`)?.focus({ preventScroll: true });
@@ -576,6 +692,7 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
       if (modoAtual === 'vertical') avisar('O zoom fica no modo Páginas.');
       else zerarZoom({ animar: true });
     } else if (acao === 'opcoes') abrirOpcoes();
+    else if (acao === 'concluir') concluir();
     else if (EM_BREVE[acao]) avisar(EM_BREVE[acao]);
   });
 
@@ -594,19 +711,24 @@ export async function abrirLeitor(id, { raiz, avisar, aoFechar = () => {} }) {
     evento.preventDefault();
   });
 
-  function fechar() {
+  function fechar(depois) {
     if (aberto?.camada !== camada) return;
     aberto = null;
     clearTimeout(dicaTimer);
     clearTimeout(toquePendente?.timer);
+    soltarTelaAcesa();
+    document.removeEventListener('visibilitychange', aoVoltarAoApp);
+    paisagem.removeEventListener('change', aoGirar);
     desmontarRolo();
     paginas.fechar();
+    // A camada segura os toques até sair: senão o clique que vem depois do último toque
+    // cairia na capa que está por baixo e reabriria o volume
     delete camada.dataset.aberto;
-    camada.style.pointerEvents = 'none';
-    for (const irmao of raiz.children) irmao.inert = false;
     setTimeout(() => {
+      for (const irmao of raiz.children) if (irmao !== camada) irmao.inert = false;
       camada.remove();
-      aoFechar(id);
+      if (depois) depois();
+      else aoFechar(id);
     }, SAIDA_MS);
   }
 

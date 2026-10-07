@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="36" height="66" viewBox="0 0 36 66" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Copo esquerdo">
+<path id="Vector" d="M18 39H27L30 3H6L9 39H18ZM18 39V60M9 63H27M9 27H27" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" stroke="#B69C66"/>
+<g id="Morango &#194;&#183; rosa seco">
+<path id="Vector_2" d="M13.2 15.9C13.2 14.3 14.8 13.9 18 14.7C21.2 13.9 22.8 14.3 22.8 15.9C22.8 19.9 21.2 23.1 18 25.5C14.8 23.1 13.2 19.9 13.2 15.9Z" fill="#C093A2" stroke-width="0.72" stroke-linecap="round" stroke-linejoin="round" stroke="#C093A2"/>
+</g>
+<g id="Folhas do morango" clip-path="url(#clip0_0_55)">
+<path id="Vector_3" d="M13.2 14.8L15.6 11.2L18 14.8L20.4 11.2L22.8 14.8M18 13.6V10" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round" stroke="#B69C66"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_55">
+<rect width="12" height="6" fill="white" transform="translate(12 10)"/>
+</clipPath>
+</defs>
+</svg>
