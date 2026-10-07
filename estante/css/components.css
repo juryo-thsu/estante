@@ -22,6 +22,7 @@
 .icone--sort { -webkit-mask-image: url("../assets/icons/sort.svg"); mask-image: url("../assets/icons/sort.svg"); }
 .icone--voltar { -webkit-mask-image: url("../assets/icons/voltar.svg"); mask-image: url("../assets/icons/voltar.svg"); }
 .icone--arquivos-zip { -webkit-mask-image: url("../assets/icons/arquivos-zip.svg"); mask-image: url("../assets/icons/arquivos-zip.svg"); }
+.icone--planeta-original { -webkit-mask-image: url("../assets/icons/planeta-original.svg"); mask-image: url("../assets/icons/planeta-original.svg"); }
 .icone--anel-girando { -webkit-mask-image: url("../assets/icons/anel-girando.svg"); mask-image: url("../assets/icons/anel-girando.svg"); }
 .icone--16 { width: 16px; height: 16px; }
 .icone--20 { width: 20px; height: 20px; }
@@ -136,6 +137,24 @@
 }
 .rodape-acao .botao {
   border-radius: var(--radius-6);
+}
+
+/* ---------- Cartão de informação (Dados e app, passos da instalação, avisos) ---------- */
+.cartao-dados {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-16);
+  border-radius: var(--radius-8);
+  background: var(--color-surface);
+}
+.cartao-dados__titulo {
+  font: var(--t-section);
+}
+.cartao-dados__texto {
+  max-width: 313px;
+  color: var(--color-muted);
+  font: var(--t-small);
 }
 
 /* ---------- Campo de texto ---------- */

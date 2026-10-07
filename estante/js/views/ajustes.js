@@ -21,7 +21,7 @@ export function renderAjustes() {
         ${tema('morango', 'Morango', 'Creme e rosa')}
       </div>
       <button class="botao botao--secundario" type="button" data-acao="em-breve" data-o-que="As preferências de leitura chegam com o leitor.">Preferências de leitura</button>
-      <button class="botao botao--secundario" type="button" data-acao="em-breve" data-o-que="Dados e backup chegam com a importação.">Dados, armazenamento e backup</button>
+      <button class="botao botao--secundario" type="button" data-acao="ir" data-destino="dados">Dados, armazenamento e backup</button>
       <button class="botao botao--secundario" type="button" data-acao="anotacoes">Páginas e anotações</button>
       <p class="ajustes__nota">Animações curtas · respeita movimento reduzido</p>
       <p class="ajustes__versao">ESTANTE · versão ${VERSAO}</p>

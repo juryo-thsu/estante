@@ -447,6 +447,29 @@
   font: var(--t-label);
 }
 
+/* ---------- Instalar app ---------- */
+.icone-do-app {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-6);
+  background: var(--color-background);
+  color: var(--color-accent);
+}
+.icone-do-app .icone {
+  width: 55px;
+  height: 55px;
+}
+.passos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 /* Movimento reduzido: o anel não gira, só respira (fade) */
 @keyframes respiro {
   50% { opacity: 0.4; }

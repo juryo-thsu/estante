@@ -2,6 +2,7 @@
 
 import { estado, volume, importando } from '../store.js';
 import { esc, plural, doisDigitos, nomeLongo, icone } from '../ui.js';
+import { instalado, safariDoIos } from '../offline.js';
 
 export function renderImportar() {
   return estado.importacao ? telaResultados(estado.importacao) : telaEscolher();
@@ -18,10 +19,24 @@ function rodape(botao) {
   return `<div class="rodape-acao">${botao}</div>`;
 }
 
+/**
+ * No iPhone, o app da tela de início guarda os dados separado do Safari:
+ * importar numa aba e instalar depois deixaria o app instalado vazio.
+ */
+function avisoDeInstalacao() {
+  if (!safariDoIos() || instalado()) return '';
+  return `<section class="cartao-dados">
+    <h2 class="cartao-dados__titulo">Instale antes de importar</h2>
+    <p class="cartao-dados__texto">No iPhone, o app da tela de início guarda os mangás separado do Safari. Instale primeiro para não importar duas vezes.</p>
+    <button class="botao botao--secundario botao--44" type="button" data-acao="como-instalar">Como instalar</button>
+  </section>`;
+}
+
 function telaEscolher() {
   return `${barraComVoltar('Adicionar mangá')}
   <div class="rolagem" data-rolagem="importar">
     <div class="importar">
+      ${avisoDeInstalacao()}
       <section class="importar__cartao">
         ${icone('arquivos-zip', 40)}
         <h2 class="importar__titulo">Traga sua coleção</h2>

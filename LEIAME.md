@@ -9,8 +9,9 @@ O design vem do arquivo do Figma "App · Design e protótipo".
 Tsukina/
 ├─ estante/        o app: é esta pasta que vai para a hospedagem
 │  ├─ index.html   moldura (tela, navegação inferior, aviso)
+│  ├─ sw.js        service worker: guarda o app no aparelho para abrir sem internet
 │  ├─ css/         tokens (temas), base, components, screens, fonts
-│  ├─ js/          app, store, ui, db, zip, importacao e uma tela por arquivo em views/
+│  ├─ js/          app, store, ui, db, zip, importacao, offline e uma tela por arquivo em views/
 │  └─ assets/      ícones (SVG do Figma), fontes e ícones do app
 ├─ docs/           especificação e direção visual copiadas do Figma (só no PC)
 ├─ entregas/       cópia da etapa 1; as entregas seguintes viram tags do git (só no PC)
@@ -49,13 +50,15 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Os SVGs de `assets/icons/` são os exportados do Figma, sem alteração. A cor é aplicada por máscara no CSS, para seguir o tema.
 - `js/store.js` guarda o estado e o que fica salvo no aparelho. As telas em `js/views/` só leem do store e devolvem HTML; os toques são tratados em `js/app.js`.
 - `js/db.js` é o IndexedDB: a loja `volumes` (série, progresso, marcas, miniatura da capa, índice das páginas) e a loja `arquivos` (o CBZ/ZIP original, na mesma chave). Remover do aparelho apaga só a segunda.
+- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-2b-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
+- `js/offline.js` registra o service worker e pergunta a ele se o cache está completo, para mostrar "Pronto para usar offline" em Ajustes → Dados, armazenamento e backup. No Live Server (`127.0.0.1`) o service worker fica desligado, para cada recarga mostrar o código editado; para testar o offline no computador, abra `http://127.0.0.1:5500/?offline`.
 - `js/zip.js` é o leitor de ZIP; `js/importacao.js` valida o arquivo, ordena as páginas, gera a miniatura e deduz série e volume pelo nome.
 - Nomes de classes, funções e comentários em português.
 
 ## Etapas
 
 1. **Estante, Favoritos, Ajustes, temas e folha de ações** (feita).
-2. Importação de CBZ/ZIP, armazenamento, instalação e uso offline, em três partes: 2a importar e guardar (entregue, em teste no iPhone); 2b instalar e usar offline; 2c armazenamento.
+2. Importação de CBZ/ZIP, armazenamento, instalação e uso offline, em três partes: 2a importar e guardar e 2b instalar e usar offline (entregues, em teste no iPhone); 2c armazenamento.
 3. Leitor: gestos, direção de leitura, progresso, fim de volume.
 4. Anotações, backup e gestão de espaço.
 
@@ -76,3 +79,7 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - "Preparando sua estante" (Carregando — anel) só aparece se o banco demorar mais de 250 ms para abrir. O anel gira; com movimento reduzido, só pulsa a opacidade.
 - Campos de texto em 16 px: com menos, o iOS dá zoom ao focar.
 - Tema e ordenação continuam no localStorage, para o tema valer antes da primeira pintura. As marcas dos volumes de exemplo da etapa 1 foram descartadas.
+- Versão nova do app: o service worker novo assume assim que termina de guardar tudo. A tela que está aberta continua como estava, e a próxima abertura já vem atualizada (sem aviso de "nova versão").
+- Tela "Dados e app" nesta parte só com "Ler como app" e o cartão do offline; espaço e persistência entram na 2c, backup e Gerenciar volumes na etapa 4. "Ler como app" some quando o app está aberto pela tela de início.
+- Estados do cartão do offline que o Figma não mostra: "Conferindo…", "Preparando o uso offline…", "Uso offline indisponível" e, no computador, "Uso offline desligado".
+- No Safari do iPhone, fora da tela de início, a tela "Adicionar mangá" mostra "Instale antes de importar": o app instalado guarda os dados separado do Safari, e importar antes de instalar obrigaria a importar de novo.

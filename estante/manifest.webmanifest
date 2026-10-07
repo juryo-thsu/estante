@@ -3,6 +3,7 @@
   "short_name": "Estante",
   "description": "Sua estante de mangás, no seu aparelho.",
   "lang": "pt-BR",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

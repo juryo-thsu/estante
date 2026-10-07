@@ -8,7 +8,10 @@ import { renderEstante, renderColecao, renderCarregando } from './views/estante.
 import { renderFavoritos } from './views/favoritos.js';
 import { renderAjustes } from './views/ajustes.js';
 import { renderImportar } from './views/importar.js';
+import { renderDados } from './views/dados.js';
+import { renderInstalar } from './views/instalar.js';
 import { abrirFolha, folhaAberta } from './views/folha.js';
+import { iniciarOffline } from './offline.js';
 
 const app = document.getElementById('app');
 const tela = document.getElementById('tela');
@@ -16,14 +19,16 @@ const nav = document.getElementById('nav');
 const aviso = document.getElementById('aviso');
 const seletor = document.getElementById('seletor');
 
-// "importar" é uma tela cheia, sem a navegação inferior (como no Figma)
-const DESTINOS = ['biblioteca', 'favoritos', 'ajustes', 'importar'];
+const DESTINOS = ['biblioteca', 'favoritos', 'ajustes', 'importar', 'dados', 'instalar'];
+// Telas cheias, com voltar e ação embaixo no lugar da navegação inferior (como no Figma)
+const TELAS_CHEIAS = ['importar', 'dados', 'instalar'];
 const TOQUE_LONGO = 400; // ms, como na especificação
 
 const ui = {
   destino: DESTINOS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'biblioteca',
   ocultoAgora: null, // volume recém-oculto: a Biblioteca mostra a tela "Volume oculto"
   recemFavoritados: new Set(), // para o pulso do coração ao abrir Favoritos
+  voltarDaInstalacao: 'dados', // "Instalar app" abre de Dados e app ou da importação
 };
 
 // ---------- Tema ----------
@@ -67,12 +72,16 @@ function render({ manterRolagem = true } = {}) {
   const topo = rolagem?.scrollTop ?? 0;
   const restaurarCampos = guardarCampos();
 
-  nav.hidden = ui.destino === 'importar';
+  nav.hidden = TELAS_CHEIAS.includes(ui.destino);
 
   if (!estado.carregado) {
     tela.innerHTML = renderCarregando();
   } else if (ui.destino === 'importar') {
     tela.innerHTML = renderImportar();
+  } else if (ui.destino === 'dados') {
+    tela.innerHTML = renderDados();
+  } else if (ui.destino === 'instalar') {
+    tela.innerHTML = renderInstalar();
   } else if (ui.destino === 'favoritos') {
     tela.innerHTML = renderFavoritos({ recemFavoritados: ui.recemFavoritados });
     ui.recemFavoritados = new Set();
@@ -251,6 +260,10 @@ tela.addEventListener('click', (evento) => {
   else if (acao === 'sair-importacao') sairDaImportacao();
   else if (acao === 'corrigir') abrirCorrecao(alvo.dataset.chave, true);
   else if (acao === 'cancelar-correcao') abrirCorrecao(alvo.dataset.chave, false);
+  else if (acao === 'como-instalar') {
+    ui.voltarDaInstalacao = ui.destino;
+    ir('instalar');
+  } else if (acao === 'fechar-instalacao') ir(ui.voltarDaInstalacao);
   else if (acao === 'filtro') definirFiltro(alvo.dataset.filtro);
   else if (acao === 'ordenar') proximaOrdem();
   else if (acao === 'tema') definirTema(alvo.dataset.tema);
@@ -306,3 +319,5 @@ carregar()
     clearTimeout(esperaLonga);
     render();
   });
+
+iniciarOffline();

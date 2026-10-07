@@ -26,6 +26,8 @@ export const estado = {
   volumes: [],
   /** Importação em curso ou recém-terminada: `{ itens: [...] }`, ou null. */
   importacao: null,
+  /** 'verificando' | 'preparando' | 'pronto' | 'indisponivel' | 'desligado' (no computador) */
+  offline: 'verificando',
 };
 
 function salvarPreferencias() {
@@ -138,6 +140,12 @@ export function definirTema(tema) {
   estado.tema = tema === 'morango' ? 'morango' : 'noite';
   salvarPreferencias();
   avisar();
+}
+
+export function definirOffline(situacao) {
+  if (estado.offline === situacao) return;
+  estado.offline = situacao;
+  avisar('offline');
 }
 
 export function definirFiltro(filtro) {
