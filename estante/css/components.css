@@ -20,8 +20,12 @@
 .icone--lock { -webkit-mask-image: url("../assets/icons/lock.svg"); mask-image: url("../assets/icons/lock.svg"); }
 .icone--search { -webkit-mask-image: url("../assets/icons/search.svg"); mask-image: url("../assets/icons/search.svg"); }
 .icone--sort { -webkit-mask-image: url("../assets/icons/sort.svg"); mask-image: url("../assets/icons/sort.svg"); }
+.icone--voltar { -webkit-mask-image: url("../assets/icons/voltar.svg"); mask-image: url("../assets/icons/voltar.svg"); }
+.icone--arquivos-zip { -webkit-mask-image: url("../assets/icons/arquivos-zip.svg"); mask-image: url("../assets/icons/arquivos-zip.svg"); }
+.icone--anel-girando { -webkit-mask-image: url("../assets/icons/anel-girando.svg"); mask-image: url("../assets/icons/anel-girando.svg"); }
 .icone--16 { width: 16px; height: 16px; }
 .icone--20 { width: 20px; height: 20px; }
+.icone--40 { width: 40px; height: 40px; }
 .icone--48 { width: 48px; height: 48px; }
 
 /* Coração preenchido: duas camadas (miolo + traço) para as duas cores seguirem o tema */
@@ -93,6 +97,74 @@
 .botao--secundario:active {
   background: var(--color-elevated);
 }
+/* Variante de 44 px do Figma ("Escolher outros arquivos") */
+.botao--44 {
+  min-height: 44px;
+  border-radius: var(--radius-6);
+}
+
+/* ---------- Cabeçalho com voltar (telas cheias, sem navegação inferior) ---------- */
+.barra-voltar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: 56px;
+  padding-inline: var(--gutter);
+}
+.voltar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--color-accent);
+}
+.barra-voltar__titulo {
+  min-width: 0;
+  overflow: hidden;
+  font: var(--t-section);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ação principal presa embaixo, acima da área segura ("Ação e área segura") */
+.rodape-acao {
+  flex: none;
+  padding: var(--space-8) var(--gutter) max(var(--sab), var(--space-16));
+  background: var(--color-background);
+}
+.rodape-acao .botao {
+  border-radius: var(--radius-6);
+}
+
+/* ---------- Campo de texto ---------- */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.campo__rotulo {
+  color: var(--color-muted);
+  font: var(--t-label);
+}
+/* 16 px: com menos que isso o iOS dá zoom na página ao focar o campo */
+.campo__entrada {
+  width: 100%;
+  height: 44px;
+  padding: 0 11px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-6);
+  outline: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font: 500 16px/20px var(--font-ui);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.campo__entrada:focus {
+  border-color: var(--color-accent);
+}
 
 /* ---------- Estante / Filtro ---------- */
 .filtros {
@@ -152,33 +224,34 @@
   aspect-ratio: auto;
 }
 
-/* Capa de exemplo (sem arquivo): some quando a importação trouxer as capas reais */
-.capa--exemplo {
+/* Capa sem imagem (miniatura ausente): cartão com o número do volume */
+.capa--sem-imagem {
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
-  padding: 12px;
+  padding: 11px;
   border: 1px solid var(--color-border);
-  background: var(--tom, var(--color-elevated));
-  color: var(--tom-texto, var(--color-text));
+  color: var(--color-text);
 }
-.capa--exemplo[data-tom="acao"] { --tom: var(--color-action); --tom-texto: var(--color-onAccent); }
-.capa--exemplo[data-tom="rosa"] { --tom: var(--color-rose); --tom-texto: var(--color-background); }
-.capa--exemplo[data-tom="perola"] { --tom: var(--color-pearl); --tom-texto: var(--color-background); }
-.capa--exemplo .capa__numero {
+.capa--sem-imagem .capa__numero {
   font: 700 64px/1 var(--font-display);
 }
-.capa--retomar.capa--exemplo {
-  padding: 6px;
+.capa--retomar.capa--sem-imagem {
+  padding: 5px;
 }
-.capa--retomar.capa--exemplo .capa__numero {
+.capa--retomar.capa--sem-imagem .capa__numero {
   font-size: 28px;
 }
-.capa--mini.capa--exemplo {
-  padding: 4px;
+.capa--mini.capa--sem-imagem {
+  padding: 3px;
 }
-.capa--mini.capa--exemplo .capa__numero {
+.capa--mini.capa--sem-imagem .capa__numero {
   font-size: 16px;
+}
+
+/* Volume cujo arquivo saiu do aparelho: a capa fica apagada, o progresso continua */
+.volume--sem-arquivo .capa {
+  opacity: 0.45;
 }
 
 /* ---------- Estante / Mangá ---------- */
@@ -447,6 +520,10 @@
   border-radius: var(--radius-4);
   font: var(--t-body);
   white-space: nowrap;
+}
+/* Segundo toque de "Remover do aparelho" */
+.acao--confirmar {
+  color: var(--color-rose);
 }
 .acao .icone {
   color: var(--color-accent);

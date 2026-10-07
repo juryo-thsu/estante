@@ -10,7 +10,7 @@ Tsukina/
 ├─ estante/        o app: é esta pasta que vai para a hospedagem
 │  ├─ index.html   moldura (tela, navegação inferior, aviso)
 │  ├─ css/         tokens (temas), base, components, screens, fonts
-│  ├─ js/          app, store, ui, demo e uma tela por arquivo em views/
+│  ├─ js/          app, store, ui, db, zip, importacao e uma tela por arquivo em views/
 │  └─ assets/      ícones (SVG do Figma), fontes e ícones do app
 ├─ docs/           especificação e direção visual copiadas do Figma
 ├─ entregas/       cópia da etapa 1; as entregas seguintes viram tags do git
@@ -46,13 +46,14 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - `css/components.css` tem as peças reutilizáveis (botão, filtro, capa, cartão de volume, pérolas, navegação, folha de ações). `css/screens.css` tem o que é de cada tela.
 - Os SVGs de `assets/icons/` são os exportados do Figma, sem alteração. A cor é aplicada por máscara no CSS, para seguir o tema.
 - `js/store.js` guarda o estado e o que fica salvo no aparelho. As telas em `js/views/` só leem do store e devolvem HTML; os toques são tratados em `js/app.js`.
-- `js/demo.js` são os volumes de exemplo. O arquivo sai quando a importação de CBZ/ZIP entrar.
+- `js/db.js` é o IndexedDB: a loja `volumes` (série, progresso, marcas, miniatura da capa, índice das páginas) e a loja `arquivos` (o CBZ/ZIP original, na mesma chave). Remover do aparelho apaga só a segunda.
+- `js/zip.js` é o leitor de ZIP; `js/importacao.js` valida o arquivo, ordena as páginas, gera a miniatura e deduz série e volume pelo nome.
 - Nomes de classes, funções e comentários em português.
 
 ## Etapas
 
 1. **Estante, Favoritos, Ajustes, temas e folha de ações** (feita).
-2. Importação de CBZ/ZIP, armazenamento, instalação e uso offline, em três partes: 2a importar e guardar; 2b instalar e usar offline; 2c armazenamento.
+2. Importação de CBZ/ZIP, armazenamento, instalação e uso offline, em três partes: 2a importar e guardar (entregue, em teste no iPhone); 2b instalar e usar offline; 2c armazenamento.
 3. Leitor: gestos, direção de leitura, progresso, fim de volume.
 4. Anotações, backup e gestão de espaço.
 
@@ -65,3 +66,11 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - A barra de status e o indicador de início do Figma não são desenhados; o app usa as áreas seguras do iPhone.
 - CBZ/ZIP lidos por um leitor próprio, sem a zip.js que a especificação sugeria, para não ter dependência (escolha de J). Ele lê só o índice do ZIP: página sem compressão é lida direto do arquivo, e as comprimidas passam pelo descompactador do próprio Safari.
 - Arquivos e metadados no IndexedDB (a especificação aceita OPFS ou IndexedDB): funciona sem HTTPS, então a importação pode ser testada pelo Live Server no Wi-Fi.
+- Resultado da importação: cada cartão mostra "Série · Volume NN · N páginas" e um botão "Corrigir", que abre série e volume no próprio cartão (o Figma não desenha a correção). Colidir com um volume existente mostra o erro e não salva.
+- Estados do resultado que o Figma não mostra: "Na fila", "Importando", "Já na estante", "De volta ao aparelho" e "Sem espaço". Os arquivos são lidos um por vez.
+- Mesmo volume = mesma série (sem diferença de maiúsculas) e mesmo número. Importar de novo um volume cujo arquivo foi removido devolve o arquivo e mantém progresso e marcas; se o arquivo ainda está no aparelho, a cópia é ignorada.
+- Nome sem número de volume vira volume 1, para corrigir no resultado.
+- Remover do aparelho pede um segundo toque ("Toque de novo para remover · 71 MB"). Depois, a capa fica apagada na grade e o estado vira "Arquivo removido"; a miniatura, o progresso e as marcas ficam.
+- "Preparando sua estante" (Carregando — anel) só aparece se o banco demorar mais de 250 ms para abrir. O anel gira; com movimento reduzido, só pulsa a opacidade.
+- Campos de texto em 16 px: com menos, o iOS dá zoom ao focar.
+- Tema e ordenação continuam no localStorage, para o tema valer antes da primeira pintura. As marcas dos volumes de exemplo da etapa 1 foram descartadas.

@@ -1,14 +1,15 @@
 // "Ações da capa": a folha que sobe de baixo no toque longo ou no ⋯.
 
 import { volume, lido, naoLido, alternarFavorito, alternarLido, definirOculto } from '../store.js';
-import { esc, nomeLongo, icone } from '../ui.js';
+import { esc, nomeLongo, icone, tamanhoLegivel } from '../ui.js';
 
 let aberta = null; // { camada, folha, id, quemAbriu, aoFechar }
 
 function posicao(v) {
-  if (naoLido(v)) return 'Ainda não lido · no seu aparelho';
-  if (lido(v)) return `Lido · ${v.paginas} páginas · no seu aparelho`;
-  return `Página ${v.pagina} de ${v.paginas} · no seu aparelho`;
+  const onde = v.temArquivo ? 'no seu aparelho' : 'arquivo removido';
+  if (naoLido(v)) return `Ainda não lido · ${onde}`;
+  if (lido(v)) return `Lido · ${v.paginas} páginas · ${onde}`;
+  return `Página ${v.pagina} de ${v.paginas} · ${onde}`;
 }
 
 function acaoFavorito(v, pulsar = false) {
@@ -28,13 +29,13 @@ function conteudo(v) {
     <button class="acao" type="button" data-acao-folha="anotacoes">${icone('pin')}<span>Páginas e anotações</span></button>
     <button class="acao" type="button" data-acao-folha="lido"><span>${lido(v) ? 'Marcar como não lido' : 'Marcar como lido'}</span></button>
     <button class="acao" type="button" data-acao-folha="ocultar">${icone('lock')}<span>Ocultar volume</span></button>
-    <button class="acao" type="button" data-acao-folha="remover"><span>Remover do aparelho</span></button>
+    ${v.temArquivo ? '<button class="acao" type="button" data-acao-folha="remover"><span>Remover do aparelho</span></button>' : ''}
     <button class="botao botao--secundario" type="button" data-acao-folha="fechar">Concluir</button>`;
 }
 
 /**
  * Abre a folha para um volume.
- * `aoAgir(acao, id)` recebe o que a folha não resolve sozinha: 'ocultar', 'anotacoes', 'remover', 'favoritou'.
+ * `aoAgir(acao, id)` recebe o que a folha não resolve sozinha: 'ocultar', 'anotacoes', 'remover' (já confirmado), 'favoritou'.
  */
 export function abrirFolha(id, { raiz, aoAgir = () => {} } = {}) {
   const v = volume(id);
@@ -81,7 +82,15 @@ export function abrirFolha(id, { raiz, aoAgir = () => {} } = {}) {
       return fecharFolha(() => aoAgir('ocultar', id));
     }
 
-    // 'anotacoes' e 'remover' pertencem às próximas etapas
+    // Remover apaga o arquivo de verdade: o primeiro toque só pede confirmação
+    if (acao === 'remover' && !alvo.hasAttribute('data-confirmar')) {
+      alvo.setAttribute('data-confirmar', '');
+      alvo.classList.add('acao--confirmar');
+      alvo.querySelector('span').textContent = `Toque de novo para remover · ${tamanhoLegivel(volume(id).tamanho)}`;
+      return;
+    }
+
+    // 'anotacoes' é de uma próxima etapa; 'remover' quem faz é o app.js
     fecharFolha(() => aoAgir(acao, id));
   });
 

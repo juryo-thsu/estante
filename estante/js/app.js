@@ -1,19 +1,23 @@
-// Estante · ponto de entrada: navegação entre as três abas, tema, toques e avisos.
+// Estante · ponto de entrada: navegação entre as abas e a importação, tema, toques e avisos.
 
 import {
-  estado, assinar, definirTema, definirFiltro, definirBusca, proximaOrdem, definirOculto, mostrarOcultos,
+  estado, assinar, carregar, volume, definirTema, definirFiltro, definirBusca, proximaOrdem, definirOculto, mostrarOcultos,
+  removerArquivo, importar, encerrarImportacao, abrirCorrecao, corrigirResultado,
 } from './store.js';
-import { renderEstante, renderColecao } from './views/estante.js';
+import { renderEstante, renderColecao, renderCarregando } from './views/estante.js';
 import { renderFavoritos } from './views/favoritos.js';
 import { renderAjustes } from './views/ajustes.js';
+import { renderImportar } from './views/importar.js';
 import { abrirFolha, folhaAberta } from './views/folha.js';
 
 const app = document.getElementById('app');
 const tela = document.getElementById('tela');
 const nav = document.getElementById('nav');
 const aviso = document.getElementById('aviso');
+const seletor = document.getElementById('seletor');
 
-const DESTINOS = ['biblioteca', 'favoritos', 'ajustes'];
+// "importar" é uma tela cheia, sem a navegação inferior (como no Figma)
+const DESTINOS = ['biblioteca', 'favoritos', 'ajustes', 'importar'];
 const TOQUE_LONGO = 400; // ms, como na especificação
 
 const ui = {
@@ -32,12 +36,44 @@ function aplicarTema() {
 
 // ---------- Renderização ----------
 
+/** Campos digitados sobrevivem ao redesenho: a fila da importação redesenha a tela no meio de uma correção. */
+function guardarCampos() {
+  const ativo = document.activeElement;
+  const campos = [...tela.querySelectorAll('input[id]')].map((campo) => ({
+    id: campo.id,
+    valor: campo.value,
+    focado: campo === ativo,
+    selecao: campo === ativo ? [campo.selectionStart, campo.selectionEnd] : null,
+  }));
+  return () => {
+    for (const { id, valor, focado, selecao } of campos) {
+      const campo = document.getElementById(id);
+      if (!campo || !tela.contains(campo)) continue;
+      campo.value = valor;
+      if (!focado) continue;
+      campo.focus({ preventScroll: true });
+      try {
+        campo.setSelectionRange(...selecao);
+      } catch {
+        // Campo sem seleção de texto: o foco basta
+      }
+    }
+  };
+}
+
 function render({ manterRolagem = true } = {}) {
   const rolagem = tela.querySelector('[data-rolagem]');
   const chave = rolagem?.dataset.rolagem;
   const topo = rolagem?.scrollTop ?? 0;
+  const restaurarCampos = guardarCampos();
 
-  if (ui.destino === 'favoritos') {
+  nav.hidden = ui.destino === 'importar';
+
+  if (!estado.carregado) {
+    tela.innerHTML = renderCarregando();
+  } else if (ui.destino === 'importar') {
+    tela.innerHTML = renderImportar();
+  } else if (ui.destino === 'favoritos') {
     tela.innerHTML = renderFavoritos({ recemFavoritados: ui.recemFavoritados });
     ui.recemFavoritados = new Set();
   } else if (ui.destino === 'ajustes') {
@@ -48,6 +84,7 @@ function render({ manterRolagem = true } = {}) {
 
   const nova = tela.querySelector('[data-rolagem]');
   if (manterRolagem && nova && nova.dataset.rolagem === chave) nova.scrollTop = topo;
+  restaurarCampos();
 
   for (const botao of nav.querySelectorAll('[data-destino]')) {
     if (botao.dataset.destino === ui.destino) botao.setAttribute('aria-current', 'page');
@@ -73,6 +110,10 @@ function ir(destino) {
 }
 
 assinar((motivo) => {
+  if (motivo === 'erro-gravacao') {
+    avisar('Não deu para salvar no aparelho. Confira o espaço livre.');
+    return;
+  }
   if (motivo === 'busca') {
     const colecao = document.getElementById('colecao');
     if (colecao) colecao.innerHTML = renderColecao();
@@ -94,10 +135,45 @@ function avisar(texto) {
 
 const EM_BREVE = {
   abrir: 'O leitor chega em uma próxima etapa.',
-  adicionar: 'A importação de CBZ e ZIP é a próxima etapa.',
   anotacoes: 'As anotações chegam em uma próxima etapa.',
-  remover: 'Remover do aparelho chega com a importação.',
 };
+
+// ---------- Importação ----------
+
+function escolherArquivos() {
+  // Precisa acontecer dentro do toque, senão o iOS não abre o app Arquivos
+  seletor.click();
+}
+
+seletor.addEventListener('change', () => {
+  const arquivos = [...seletor.files];
+  // Limpar permite escolher o mesmo arquivo de novo depois
+  seletor.value = '';
+  if (arquivos.length === 0) return;
+  importar(arquivos);
+  if (ui.destino !== 'importar') ir('importar');
+});
+
+function sairDaImportacao() {
+  encerrarImportacao();
+  ir('biblioteca');
+}
+
+async function removerDoAparelho(id) {
+  try {
+    await removerArquivo(id);
+    avisar('Arquivo removido. O progresso continua salvo.');
+  } catch (erro) {
+    console.error(erro);
+    avisar('Não deu para remover o arquivo.');
+  }
+}
+
+function abrirVolume(id) {
+  const v = volume(id);
+  if (v && !v.temArquivo) avisar('Importe o CBZ ou ZIP de novo para ler este volume.');
+  else avisar(EM_BREVE.abrir);
+}
 
 // ---------- Folha de ações ----------
 
@@ -111,6 +187,8 @@ function abrirAcoes(id) {
         ui.destino = 'biblioteca';
         ui.ocultoAgora = idDoVolume;
         render({ manterRolagem: false });
+      } else if (acao === 'remover') {
+        removerDoAparelho(idDoVolume);
       } else if (EM_BREVE[acao]) {
         avisar(EM_BREVE[acao]);
       }
@@ -167,6 +245,12 @@ tela.addEventListener('click', (evento) => {
   const { acao, id } = alvo.dataset;
 
   if (acao === 'acoes') abrirAcoes(id);
+  else if (acao === 'abrir') abrirVolume(id);
+  else if (acao === 'adicionar') ir('importar');
+  else if (acao === 'escolher-arquivos') escolherArquivos();
+  else if (acao === 'sair-importacao') sairDaImportacao();
+  else if (acao === 'corrigir') abrirCorrecao(alvo.dataset.chave, true);
+  else if (acao === 'cancelar-correcao') abrirCorrecao(alvo.dataset.chave, false);
   else if (acao === 'filtro') definirFiltro(alvo.dataset.filtro);
   else if (acao === 'ordenar') proximaOrdem();
   else if (acao === 'tema') definirTema(alvo.dataset.tema);
@@ -177,6 +261,14 @@ tela.addEventListener('click', (evento) => {
     definirOculto(id, false);
   } else if (acao === 'em-breve') avisar(alvo.dataset.oQue);
   else if (EM_BREVE[acao]) avisar(EM_BREVE[acao]);
+});
+
+tela.addEventListener('submit', (evento) => {
+  const formulario = evento.target.closest('[data-form="corrigir"]');
+  if (!formulario) return;
+  evento.preventDefault();
+  const dados = new FormData(formulario);
+  corrigirResultado(formulario.dataset.chave, dados.get('serie') ?? '', dados.get('numero') ?? '');
 });
 
 tela.addEventListener('input', (evento) => {
@@ -201,4 +293,16 @@ window.addEventListener('hashchange', () => {
 document.addEventListener('touchstart', () => {}, { passive: true });
 
 aplicarTema();
-render();
+
+// O banco costuma abrir em poucos ms: "Preparando sua estante" só aparece se demorar,
+// para não piscar a cada abertura do app.
+const esperaLonga = setTimeout(render, 250);
+carregar()
+  .catch((erro) => {
+    console.error(erro);
+    avisar('Não deu para abrir o armazenamento do aparelho.');
+  })
+  .finally(() => {
+    clearTimeout(esperaLonga);
+    render();
+  });

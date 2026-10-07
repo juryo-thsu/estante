@@ -1,8 +1,9 @@
 // Estado do app e o que fica salvo no aparelho.
-// Nesta etapa: tema, ordenação e as marcas de cada volume (favorito, oculto, página)
-// vão para o localStorage. A biblioteca em si passa para o IndexedDB na etapa de importação.
+// Tema e ordenação ficam no localStorage (o tema precisa estar disponível antes da
+// primeira pintura). Volumes, progresso, capas e arquivos ficam no IndexedDB (db.js).
 
-import { volumesDeExemplo } from './demo.js';
+import * as db from './db.js';
+import { lerVolume, ErroDeImportacao } from './importacao.js';
 
 const CHAVE = 'estante:v1';
 
@@ -21,16 +22,15 @@ export const estado = {
   ordem: ['volume-asc', 'volume-desc', 'recentes'].includes(salvo.ordem) ? salvo.ordem : 'volume-asc',
   filtro: 'todos',
   busca: '',
-  volumes: volumesDeExemplo().map((v) => ({ ...v, ...(salvo.marcas?.[v.id] || {}) })),
+  carregado: false,
+  volumes: [],
+  /** Importação em curso ou recém-terminada: `{ itens: [...] }`, ou null. */
+  importacao: null,
 };
 
-function salvar() {
-  const marcas = {};
-  for (const v of estado.volumes) {
-    marcas[v.id] = { favorito: v.favorito, oculto: v.oculto, pagina: v.pagina, paginaAntes: v.paginaAntes, lidoEm: v.lidoEm };
-  }
+function salvarPreferencias() {
   try {
-    localStorage.setItem(CHAVE, JSON.stringify({ tema: estado.tema, ordem: estado.ordem, marcas }));
+    localStorage.setItem(CHAVE, JSON.stringify({ tema: estado.tema, ordem: estado.ordem }));
   } catch {
     // Sem armazenamento (aba privada, cota): o app segue funcionando, só não lembra.
   }
@@ -41,9 +41,36 @@ export function assinar(fn) {
   ouvintes.add(fn);
   return () => ouvintes.delete(fn);
 }
-function avisar() {
-  salvar();
-  for (const fn of ouvintes) fn();
+function avisar(motivo) {
+  for (const fn of ouvintes) fn(motivo);
+}
+
+// ---------- Banco ----------
+
+/** O que vai para o IndexedDB: tudo menos o object URL da capa, que só vale nesta sessão. */
+function registro(v) {
+  const { capa, ...resto } = v;
+  return resto;
+}
+
+function comCapa(reg) {
+  return { ...reg, capa: reg.capaBlob ? URL.createObjectURL(reg.capaBlob) : null };
+}
+
+function persistir(v) {
+  db.salvarVolume(registro(v)).catch((erro) => {
+    console.error(erro);
+    avisar('erro-gravacao');
+  });
+}
+
+export async function carregar() {
+  try {
+    estado.volumes = (await db.lerVolumes()).map(comCapa);
+  } finally {
+    estado.carregado = true;
+  }
+  avisar();
 }
 
 // ---------- Leitura ----------
@@ -109,6 +136,7 @@ export function ultimosLidos(quantos = 2) {
 
 export function definirTema(tema) {
   estado.tema = tema === 'morango' ? 'morango' : 'noite';
+  salvarPreferencias();
   avisar();
 }
 
@@ -119,12 +147,13 @@ export function definirFiltro(filtro) {
 
 export function definirBusca(texto) {
   estado.busca = texto;
-  for (const fn of ouvintes) fn('busca');
+  avisar('busca');
 }
 
 export function proximaOrdem() {
   const ciclo = ['volume-asc', 'volume-desc', 'recentes'];
   estado.ordem = ciclo[(ciclo.indexOf(estado.ordem) + 1) % ciclo.length];
+  salvarPreferencias();
   avisar();
 }
 
@@ -132,6 +161,7 @@ export function alternarFavorito(id) {
   const v = volume(id);
   if (!v) return false;
   v.favorito = !v.favorito;
+  persistir(v);
   avisar();
   return v.favorito;
 }
@@ -147,6 +177,7 @@ export function alternarLido(id) {
     v.pagina = v.paginas;
     v.lidoEm = Date.now();
   }
+  persistir(v);
   avisar();
 }
 
@@ -154,10 +185,174 @@ export function definirOculto(id, oculto) {
   const v = volume(id);
   if (!v) return;
   v.oculto = oculto;
+  persistir(v);
   avisar();
 }
 
 export function mostrarOcultos() {
-  for (const v of estado.volumes) v.oculto = false;
+  for (const v of ocultos()) {
+    v.oculto = false;
+    persistir(v);
+  }
   avisar();
+}
+
+/** Apaga o CBZ/ZIP do aparelho. Série, capa, progresso e marcas ficam. */
+export async function removerArquivo(id) {
+  const v = volume(id);
+  if (!v?.temArquivo) return;
+  const atualizado = { ...registro(v), temArquivo: false, paginasDoArquivo: null };
+  await db.removerArquivo(atualizado);
+  Object.assign(v, atualizado);
+  avisar();
+}
+
+// ---------- Importação ----------
+
+// Mesmo volume = mesma série (sem diferença de maiúsculas) e mesmo número
+const chaveDoVolume = (serie, numero) => `${serie.trim().normalize('NFC').toLocaleLowerCase('pt-BR')}#${numero}`;
+const doVolume = (serie, numero) => estado.volumes.find((v) => chaveDoVolume(v.serie, v.numero) === chaveDoVolume(serie, numero));
+
+let processando = false;
+let contador = 0;
+
+// crypto.randomUUID só existe em HTTPS, e a 2a é testada por HTTP no Wi-Fi
+const novoId = () => `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+export const importando = () => processando;
+
+/** Põe os arquivos escolhidos na fila. Um por vez, para não segurar dois volumes na memória. */
+export function importar(arquivos) {
+  if (!arquivos.length) return;
+  estado.importacao ??= { itens: [] };
+  for (const arquivo of arquivos) {
+    estado.importacao.itens.push({ chave: `arquivo-${++contador}`, nome: arquivo.name, situacao: 'fila', arquivo });
+  }
+  avisar('importacao');
+  if (!processando) processarFila();
+}
+
+async function processarFila() {
+  processando = true;
+  try {
+    let item;
+    while ((item = estado.importacao?.itens.find((i) => i.situacao === 'fila'))) {
+      item.situacao = 'lendo';
+      avisar('importacao');
+      await importarUm(item);
+      delete item.arquivo;
+      avisar('importacao');
+    }
+  } finally {
+    processando = false;
+  }
+  avisar('importacao');
+}
+
+async function importarUm(item) {
+  try {
+    const lido = await lerVolume(item.arquivo);
+    const existente = doVolume(lido.serie, lido.numero);
+
+    if (existente?.temArquivo) {
+      item.situacao = 'repetido';
+      item.volumeId = existente.id;
+      return;
+    }
+
+    const doArquivo = {
+      paginas: lido.paginas.length,
+      paginasDoArquivo: lido.paginas,
+      capaBlob: lido.capa,
+      nomeDoArquivo: item.nome,
+      tamanho: item.arquivo.size,
+      temArquivo: true,
+    };
+
+    if (existente) {
+      // O arquivo volta para um volume que já tinha progresso: mantém tudo, só ajusta a página
+      // se a nova edição tiver menos páginas que a anterior.
+      const atualizado = { ...registro(existente), ...doArquivo };
+      atualizado.pagina = Math.min(atualizado.pagina, atualizado.paginas);
+      await db.salvarComArquivo(atualizado, item.arquivo);
+      if (existente.capa) URL.revokeObjectURL(existente.capa);
+      Object.assign(existente, atualizado, { capa: URL.createObjectURL(lido.capa) });
+      item.situacao = 'reanexado';
+      item.volumeId = existente.id;
+    } else {
+      const novo = {
+        id: novoId(),
+        serie: lido.serie,
+        numero: lido.numero,
+        pagina: 0,
+        lidoEm: null,
+        favorito: false,
+        oculto: false,
+        adicionadoEm: Date.now(),
+        ...doArquivo,
+      };
+      await db.salvarComArquivo(novo, item.arquivo);
+      estado.volumes.push(comCapa(novo));
+      item.situacao = 'salvo';
+      item.volumeId = novo.id;
+    }
+  } catch (erro) {
+    item.situacao = 'erro';
+    if (erro instanceof ErroDeImportacao) {
+      item.mensagem = erro.message;
+      item.rotulo = 'Arquivo inválido';
+    } else if (erro?.name === 'QuotaExceededError') {
+      item.mensagem = 'Falta espaço no aparelho para este volume.';
+      item.rotulo = 'Sem espaço';
+    } else {
+      console.error(erro);
+      item.mensagem = 'Não deu para guardar este arquivo no aparelho.';
+      item.rotulo = 'Erro ao salvar';
+    }
+  }
+}
+
+/** Fecha a tela de resultados. Com a fila andando, os resultados ficam até ela terminar. */
+export function encerrarImportacao() {
+  if (!processando) estado.importacao = null;
+}
+
+function itemDaImportacao(chave) {
+  return estado.importacao?.itens.find((i) => i.chave === chave);
+}
+
+export function abrirCorrecao(chave, aberta) {
+  const item = itemDaImportacao(chave);
+  if (!item) return;
+  item.corrigindo = aberta;
+  item.erroDaCorrecao = null;
+  avisar('importacao');
+}
+
+/** Corrige série e volume deduzidos do nome do arquivo. */
+export function corrigirResultado(chave, serieDigitada, numeroDigitado) {
+  const item = itemDaImportacao(chave);
+  const v = item && volume(item.volumeId);
+  if (!v) return;
+
+  const serie = serieDigitada.trim().replace(/\s+/g, ' ');
+  const numero = Number(String(numeroDigitado).trim().replace(',', '.'));
+  let erro = null;
+  if (!serie) erro = 'Escreva o nome da série.';
+  else if (String(numeroDigitado).trim() === '' || !Number.isFinite(numero) || numero < 0) erro = 'O volume precisa ser um número.';
+  else {
+    const outro = doVolume(serie, numero);
+    if (outro && outro !== v) erro = `${outro.serie} · Volume ${String(numero).padStart(2, '0')} já está na estante.`;
+  }
+
+  if (erro) {
+    item.erroDaCorrecao = erro;
+  } else {
+    v.serie = serie;
+    v.numero = numero;
+    persistir(v);
+    item.corrigindo = false;
+    item.erroDaCorrecao = null;
+  }
+  avisar('importacao');
 }

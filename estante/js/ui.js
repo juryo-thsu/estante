@@ -13,9 +13,16 @@ export const nomeCurto = (v) => `${v.serie} · v${doisDigitos(v.numero)}`;
 
 /** Estado de leitura como aparece embaixo da capa. */
 export function estadoDeLeitura(v) {
+  if (!v.temArquivo) return 'Arquivo removido';
   if (naoLido(v)) return 'Não lido';
   if (lido(v)) return `Lido · ${v.paginas} / ${v.paginas}`;
   return `Página ${v.pagina} / ${v.paginas}`;
+}
+
+/** Bytes em MB decimais, como o app Arquivos mostra: "71 MB". */
+export function tamanhoLegivel(bytes = 0) {
+  if (bytes < 1e6) return `${Math.max(1, Math.round(bytes / 1e3))} KB`;
+  return `${Math.round(bytes / 1e6)} MB`;
 }
 
 export function porcentagem(v) {
@@ -34,13 +41,13 @@ export function icone(nome, tamanho) {
   return `<span class="icone icone--${nome}${tamanho ? ` icone--${tamanho}` : ''}" aria-hidden="true"></span>`;
 }
 
-/** Capa do volume. Sem imagem (volumes de exemplo), desenha um cartão tipográfico. */
+/** Capa do volume: a miniatura feita na importação. Sem ela, um cartão com o número. */
 export function capa(v, variante = '') {
   const classe = variante ? ` capa--${variante}` : '';
   if (v.capa) {
     return `<span class="capa${classe}"><img src="${esc(v.capa)}" alt="" loading="lazy" decoding="async" draggable="false"></span>`;
   }
-  return `<span class="capa capa--exemplo${classe}" data-tom="${esc(v.tom || 'elevado')}" aria-hidden="true">
+  return `<span class="capa capa--sem-imagem${classe}" aria-hidden="true">
     <span class="capa__numero">${esc(v.numero)}</span>
   </span>`;
 }
@@ -48,7 +55,7 @@ export function capa(v, variante = '') {
 /** Componente "Estante / Mangá": capa, série, volume, estado e o botão ⋯. */
 export function cartaoDeVolume(v, { favorito = false, pulsar = false } = {}) {
   const nome = `${v.serie}, volume ${doisDigitos(v.numero)}`;
-  return `<article class="volume" data-volume="${esc(v.id)}">
+  return `<article class="volume${v.temArquivo ? '' : ' volume--sem-arquivo'}" data-volume="${esc(v.id)}">
     <button class="volume__abrir" type="button" data-acao="abrir" data-id="${esc(v.id)}" aria-label="Abrir ${esc(nome)}. ${esc(estadoDeLeitura(v))}">
       ${capa(v)}
       <span class="volume__identificacao">

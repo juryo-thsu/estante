@@ -242,10 +242,150 @@
   gap: var(--space-12);
 }
 
-.exemplo-nota {
-  padding-top: var(--space-8);
+/* ---------- Carregando — anel ---------- */
+.carregando {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-20);
+  min-height: 0;
+  padding: 80px var(--gutter) 32px;
+  overflow: hidden;
+}
+.carregando__simbolo {
+  display: grid;
+  place-items: center;
+  height: 80px;
+  color: var(--color-accent);
+}
+@keyframes orbita {
+  to { transform: rotate(360deg); }
+}
+.carregando__simbolo .icone {
+  animation: orbita 1.2s linear infinite;
+}
+.carregando__titulo {
+  font: var(--t-section);
+}
+.carregando__texto {
+  align-self: stretch;
+  color: var(--color-muted);
+}
+.carregando__capas {
+  display: flex;
+  gap: var(--space-16);
+  align-self: stretch;
+}
+.carregando__capas span {
+  flex: 1 1 0%;
+  height: 180px;
+  border-radius: var(--radius-4);
+  background: var(--color-surface);
+}
+
+/* ---------- Importar ---------- */
+.importar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-12) var(--gutter) var(--space-24);
+}
+.importar__cartao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-16);
+  border-radius: var(--radius-8);
+  background: var(--color-surface);
+}
+.importar__cartao .icone {
+  color: var(--color-accent);
+}
+.importar__titulo {
+  font: var(--t-section);
+}
+.importar__texto {
+  max-width: 313px;
   color: var(--color-muted);
   font: var(--t-small);
+}
+.formatos {
+  display: flex;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.formato {
+  flex: 90 1 0%;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: 40px;
+  border-radius: var(--radius-6);
+  background: var(--color-surface);
+  color: var(--color-accent);
+  font: var(--t-label);
+  white-space: nowrap;
+}
+.formato--largo {
+  flex-grow: 149;
+}
+
+/* Resultado por arquivo */
+.resultado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-16);
+  border-radius: var(--radius-8);
+  background: var(--color-surface);
+}
+.resultado__arquivo {
+  font: var(--t-section);
+  overflow-wrap: anywhere;
+}
+.resultado__detalhe {
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.resultado__rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+.resultado__rotulo {
+  color: var(--color-muted);
+  font: var(--t-label);
+}
+.resultado__rotulo--ok {
+  color: var(--color-accent);
+}
+/* Alvo de 44 px sem aumentar o cartão: a margem negativa avança sobre o padding */
+.resultado__corrigir {
+  flex: none;
+  height: 44px;
+  margin: -14px -16px -14px 0;
+  padding-inline: var(--space-16);
+  color: var(--color-accent);
+  font: var(--t-label);
+}
+
+.corrigir {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.corrigir__erro {
+  color: var(--color-rose);
+  font: var(--t-small);
+}
+.corrigir__botoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
 }
 
 /* ---------- Favoritos ---------- */
@@ -305,4 +445,14 @@
 .ajustes__versao {
   color: var(--color-accent);
   font: var(--t-label);
+}
+
+/* Movimento reduzido: o anel não gira, só respira (fade) */
+@keyframes respiro {
+  50% { opacity: 0.4; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .carregando__simbolo .icone {
+    animation: respiro 1.2s linear infinite;
+  }
 }

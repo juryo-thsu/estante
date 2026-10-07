@@ -1,4 +1,4 @@
-// Tela "Início — Estante" e seus estados (primeiro acesso, volume oculto).
+// Tela "Início — Estante" e seus estados (carregando, primeiro acesso, volume oculto).
 
 import {
   estado, visiveis, ocultos, daGrade, paraRetomar, ultimosLidos, emLeitura, naoLido, volume,
@@ -50,8 +50,6 @@ export function renderEstante({ ocultoAgora } = {}) {
       <section class="colecao" id="colecao" aria-label="Minha coleção">${renderColecao()}</section>
 
       ${secaoUltimosLidos()}
-
-      ${estado.volumes.some((v) => v.exemplo) ? '<p class="exemplo-nota">Volumes de exemplo, só para testar esta etapa.</p>' : ''}
     </div>
   </div>`;
 }
@@ -135,6 +133,17 @@ function secaoUltimosLidos() {
       </button>`).join('')}
     </div>
   </section>`;
+}
+
+/** "Carregando — anel": só aparece se abrir o banco demorar (ver app.js). */
+export function renderCarregando() {
+  return `<header class="cabecalho"><h1 class="titulo">Estante</h1></header>
+  <div class="carregando" role="status">
+    <div class="carregando__simbolo">${icone('anel-girando', 48)}</div>
+    <h2 class="carregando__titulo">Preparando sua estante</h2>
+    <p class="carregando__texto">Salvando capas e organizando volumes…</p>
+    <div class="carregando__capas" aria-hidden="true"><span></span><span></span></div>
+  </div>`;
 }
 
 function telaPrimeiroAcesso() {
