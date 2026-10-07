@@ -36,6 +36,8 @@ python -m http.server 5500 --directory estante
 
 Com o computador e o iPhone no mesmo Wi-Fi e o Live Server ligado, abra no Safari `http://IP-DO-COMPUTADOR:5500`. O IP aparece no comando `ipconfig` (linha "Endereço IPv4"). Na primeira vez o Windows pode pedir para liberar o acesso no firewall.
 
+Fora do Wi-Fi, o app publicado fica em **https://juryo-thsu.github.io/estante/**: cada push na `main` publica a pasta `estante/` pelo GitHub Actions (`.github/workflows/pages.yml`), sem build.
+
 Isso serve para as telas, os toques e a importação de arquivos. Instalar na tela de início, usar offline e ver a cota e a persistência exigem HTTPS, então essas partes (2b e 2c) são testadas com a pasta `estante/` publicada no GitHub Pages, a partir de um repositório git público.
 
 O app é feito para o Safari do iOS 18.4 ou mais novo.
