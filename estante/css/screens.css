@@ -470,6 +470,255 @@
   list-style: none;
 }
 
+/* ---------- Leitor de mangá ---------- */
+.leitor {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  overflow: hidden;
+  outline: none;
+  background: var(--color-background);
+  opacity: 0;
+  transition: opacity var(--motion-out) var(--ease);
+  /* Só o leitor trava o gesto do navegador: a estante conserva rolagem e zoom */
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.leitor[data-aberto] {
+  opacity: 1;
+  transition-duration: var(--motion-in);
+}
+
+/* A página fica parada: cabeçalho e controles passam por cima dela */
+.leitor__pagina {
+  position: absolute;
+  inset: var(--sat) var(--gutter) var(--sab);
+  display: grid;
+  place-items: center;
+}
+.leitor__imagem {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+.leitor__erro {
+  color: var(--color-muted);
+  font: var(--t-small);
+}
+.leitor__toques {
+  position: absolute;
+  inset: 0;
+}
+
+.leitor__topo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding-top: var(--sat);
+  background: var(--color-background);
+}
+.leitor__navegacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  padding-inline: var(--gutter);
+}
+/* Área de toque de 96×44, como no Figma */
+.leitor__voltar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 96px;
+  height: 44px;
+  margin-left: -8px;
+  padding-inline: 8px;
+  color: var(--color-accent);
+  font: 500 14px/1.2 var(--font-ui);
+}
+.leitor__lendo {
+  color: var(--color-muted);
+  font: 400 10px/1.2 var(--font-ui);
+}
+.leitor__titulo {
+  min-height: 70px;
+  padding: 4px var(--gutter) 12px;
+  font: 700 21px/1.2 var(--font-volume);
+}
+
+.leitor__base {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding-bottom: var(--sab);
+  background: var(--color-background);
+}
+.leitor__dica-toque {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(100% + 32px);
+  color: var(--color-muted);
+  font: 400 10px/1.2 var(--font-ui);
+  text-align: center;
+  pointer-events: none;
+}
+.leitor__controles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 122px;
+  padding: 13px var(--gutter) 0;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.leitor__posicao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.leitor__pagina-atual {
+  font: 500 14px/1.2 var(--font-ui);
+}
+.leitor__lido {
+  color: var(--color-muted);
+  font: 400 11px/1.2 var(--font-ui);
+}
+
+/* Slider de pérolas: trilho fino, trecho lido em dourado, 7 pérolas e o pingente na página atual */
+.leitor-slider {
+  position: relative;
+  flex: none;
+  height: 16px;
+  cursor: pointer;
+  touch-action: none;
+}
+.leitor-slider::before {
+  content: "";
+  position: absolute;
+  inset: -14px 0;
+}
+.leitor-slider__trilho,
+.leitor-slider__lido {
+  position: absolute;
+  left: 0;
+  border-radius: var(--radius-12);
+}
+.leitor-slider__trilho {
+  right: 0;
+  top: 7.5px;
+  height: 1px;
+  background: var(--color-border);
+}
+.leitor-slider__lido {
+  top: 7px;
+  width: calc(var(--p, 0) * 100%);
+  height: 2px;
+  background: var(--color-accent);
+}
+.leitor-slider__perola {
+  position: absolute;
+  top: 6.5px;
+  left: calc((100% - 3px) * var(--i) / 6);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--color-pearl);
+}
+.leitor-slider__pingente {
+  position: absolute;
+  top: 2px;
+  left: clamp(0px, calc(var(--p, 0) * 100% - 4px), calc(100% - 8px));
+  width: 8px;
+  height: 10px;
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.leitor__ferramentas {
+  display: flex;
+  gap: var(--space-8);
+  height: 46px;
+}
+.ferramenta {
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-width: 0;
+  height: 46px;
+  color: var(--color-muted);
+  font: 400 11px/1.2 var(--font-ui);
+  white-space: nowrap;
+}
+.ferramenta .icone--pin {
+  color: var(--color-accent);
+}
+.ferramenta--anotar {
+  color: var(--color-accent);
+  font: var(--t-small);
+}
+
+/* Fade dos controles: entram de y+32 em 220 ms e saem para y−24 em 180 ms.
+   A posição de partida ("antes") é aplicada sem transição, com tudo invisível. */
+.leitor__ui {
+  transition:
+    opacity var(--motion-out) var(--ease),
+    transform var(--motion-out) var(--ease),
+    visibility 0s linear var(--motion-out);
+}
+.leitor__ui[data-fase="visivel"] {
+  opacity: 1;
+  transform: none;
+  transition-duration: var(--motion-in), var(--motion-in), 0s;
+  transition-delay: 0s;
+}
+.leitor__ui[data-fase="oculto"] {
+  opacity: 0;
+  transform: translateY(-24px);
+  visibility: hidden;
+  pointer-events: none;
+}
+.leitor__ui[data-fase="antes"] {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: none;
+}
+
+/* Dica da primeira leitura: some sozinha */
+.leitor__aviso-direcao {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--sab) + 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  border-radius: var(--radius-4);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--t-small);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--motion-out) var(--ease);
+}
+.leitor__aviso-direcao[data-visivel] {
+  opacity: 1;
+  transition-duration: var(--motion-in);
+}
+
 /* Movimento reduzido: o anel não gira, só respira (fade) */
 @keyframes respiro {
   50% { opacity: 0.4; }
@@ -477,5 +726,10 @@
 @media (prefers-reduced-motion: reduce) {
   .carregando__simbolo .icone {
     animation: respiro 1.2s linear infinite;
+  }
+  /* Controles do leitor: só fade, sem deslocamento */
+  .leitor__ui,
+  .leitor__ui[data-fase] {
+    transform: none;
   }
 }

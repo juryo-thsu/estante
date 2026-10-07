@@ -20,6 +20,8 @@ const salvo = lerSalvo();
 export const estado = {
   tema: salvo.tema === 'morango' ? 'morango' : 'noite',
   ordem: ['volume-asc', 'volume-desc', 'recentes'].includes(salvo.ordem) ? salvo.ordem : 'volume-asc',
+  /** A dica "← Avançar · leitura da direita para a esquerda" aparece só na primeira leitura. */
+  dicaDeDirecaoVista: salvo.dicaDeDirecaoVista === true,
   filtro: 'todos',
   busca: '',
   carregado: false,
@@ -34,7 +36,7 @@ export const estado = {
 
 function salvarPreferencias() {
   try {
-    localStorage.setItem(CHAVE, JSON.stringify({ tema: estado.tema, ordem: estado.ordem }));
+    localStorage.setItem(CHAVE, JSON.stringify({ tema: estado.tema, ordem: estado.ordem, dicaDeDirecaoVista: estado.dicaDeDirecaoVista }));
   } catch {
     // Sem armazenamento (aba privada, cota): o app segue funcionando, só não lembra.
   }
@@ -210,6 +212,28 @@ export function mostrarOcultos() {
     persistir(v);
   }
   avisar();
+}
+
+// ---------- Leitor ----------
+
+/** Direção de leitura da série. Até as opções por série (3b), todo volume lê como mangá. */
+export const direcaoDaSerie = () => 'rtl';
+
+/** Página atual (de 1 a `paginas`) ao virar a página no leitor. */
+export function salvarPagina(id, pagina) {
+  const v = volume(id);
+  if (!v || v.pagina === pagina) return;
+  v.pagina = pagina;
+  v.paginaAntes = undefined;
+  v.lidoEm = Date.now();
+  persistir(v);
+  // Sem redesenhar a estante a cada página: ela está escondida atrás do leitor
+  avisar('progresso');
+}
+
+export function marcarDicaDeDirecaoVista() {
+  estado.dicaDeDirecaoVista = true;
+  salvarPreferencias();
 }
 
 /** Apaga o CBZ/ZIP do aparelho. Série, capa, progresso e marcas ficam. */

@@ -35,6 +35,7 @@
 
   /* Tipografia · estilos "Estante / …" */
   --font-display: "Playfair Display", "Bodoni Moda", Didot, Georgia, serif;
+  --font-volume: Lora, Georgia, serif; /* título do volume no leitor */
   --font-ui: Inter, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
 
   /* Movimento · "Fade/slide 180–220 ms, pulso 150 ms em cada fase" */

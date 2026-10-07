@@ -11,6 +11,7 @@ import { renderImportar } from './views/importar.js';
 import { renderDados } from './views/dados.js';
 import { renderInstalar } from './views/instalar.js';
 import { abrirFolha, folhaAberta } from './views/folha.js';
+import { abrirLeitor } from './views/leitor.js';
 import { iniciarOffline } from './offline.js';
 import { atualizarArmazenamento, pedirPersistencia, garantirPersistencia } from './armazenamento.js';
 
@@ -126,6 +127,8 @@ assinar((motivo) => {
     return;
   }
   if (motivo === 'importacao' && !importando()) garantirPersistencia();
+  // Virar página não redesenha a estante (escondida atrás do leitor); ela é redesenhada ao fechar
+  if (motivo === 'progresso') return;
   if (motivo === 'busca') {
     const colecao = document.getElementById('colecao');
     if (colecao) colecao.innerHTML = renderColecao();
@@ -146,7 +149,6 @@ function avisar(texto) {
 }
 
 const EM_BREVE = {
-  abrir: 'O leitor chega em uma próxima etapa.',
   anotacoes: 'As anotações chegam em uma próxima etapa.',
 };
 
@@ -184,8 +186,20 @@ async function removerDoAparelho(id) {
 
 function abrirVolume(id) {
   const v = volume(id);
-  if (v && !v.temArquivo) avisar('Importe o CBZ ou ZIP de novo para ler este volume.');
-  else avisar(EM_BREVE.abrir);
+  if (!v) return;
+  if (!v.temArquivo) {
+    avisar('Importe o CBZ ou ZIP de novo para ler este volume.');
+    return;
+  }
+  abrirLeitor(id, {
+    raiz: app,
+    avisar,
+    aoFechar(idDoVolume) {
+      render();
+      // O foco volta para a capa do volume lido (a tela foi redesenhada com o progresso novo)
+      tela.querySelector(`[data-acao="abrir"][data-id="${CSS.escape(idDoVolume)}"]`)?.focus({ preventScroll: true });
+    },
+  });
 }
 
 // ---------- Folha de ações ----------

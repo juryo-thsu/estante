@@ -11,7 +11,7 @@ Tsukina/
 │  ├─ index.html   moldura (tela, navegação inferior, aviso)
 │  ├─ sw.js        service worker: guarda o app no aparelho para abrir sem internet
 │  ├─ css/         tokens (temas), base, components, screens, fonts
-│  ├─ js/          app, store, ui, db, zip, importacao, offline, armazenamento e uma tela por arquivo em views/
+│  ├─ js/          app, store, ui, db, zip, importacao, paginas, offline, armazenamento e uma tela por arquivo em views/
 │  └─ assets/      ícones (SVG do Figma), fontes e ícones do app
 ├─ docs/           especificação e direção visual copiadas do Figma (só no PC)
 ├─ entregas/       cópia da etapa 1; as entregas seguintes viram tags do git (só no PC)
@@ -50,9 +50,10 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Os SVGs de `assets/icons/` são os exportados do Figma, sem alteração. A cor é aplicada por máscara no CSS, para seguir o tema.
 - `js/store.js` guarda o estado e o que fica salvo no aparelho. As telas em `js/views/` só leem do store e devolvem HTML; os toques são tratados em `js/app.js`.
 - `js/db.js` é o IndexedDB: a loja `volumes` (série, progresso, marcas, miniatura da capa, índice das páginas) e a loja `arquivos` (o CBZ/ZIP original, na mesma chave). Remover do aparelho apaga só a segunda.
-- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-2c-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
+- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-3a-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
 - `js/offline.js` registra o service worker e pergunta a ele se o cache está completo, para mostrar "Pronto para usar offline" em Ajustes → Dados, armazenamento e backup. No Live Server (`127.0.0.1`) o service worker fica desligado, para cada recarga mostrar o código editado; para testar o offline no computador, abra `http://127.0.0.1:5500/?offline`.
 - `js/armazenamento.js` lê o espaço usado e a cota (`navigator.storage.estimate`) e a persistência (`persisted`/`persist`) para a tela Dados e app.
+- `js/paginas.js` extrai as páginas do CBZ guardado para o leitor, só numa janela em volta da atual (uma antes, duas depois); o resto tem o object URL revogado. `js/views/leitor.js` é o leitor: uma camada sobre o app que troca só a imagem e os textos a cada página.
 - `js/zip.js` é o leitor de ZIP; `js/importacao.js` valida o arquivo, ordena as páginas, gera a miniatura e deduz série e volume pelo nome.
 - Nomes de classes, funções e comentários em português.
 
@@ -60,7 +61,7 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 
 1. **Estante, Favoritos, Ajustes, temas e folha de ações** (feita).
 2. Importação de CBZ/ZIP, armazenamento, instalação e uso offline, em três partes: 2a importar e guardar, 2b instalar e usar offline e 2c armazenamento (entregues, em teste no iPhone).
-3. Leitor: gestos, direção de leitura, progresso, fim de volume.
+3. Leitor, em três partes: 3a ler (entregue, em teste no iPhone); 3b zoom e opções por série; 3c fim do volume, página dupla e tela ligada.
 4. Anotações, backup e gestão de espaço.
 
 ## Decisões tomadas onde o Figma não definia
@@ -88,3 +89,10 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - "Gerenciar volumes" e "Progresso e anotações" (backup) ainda não aparecem: são da etapa 4.
 - Persistência: além de "Armazenamento local padrão" e "Persistência ativa" do Figma, há "Persistência não concedida" (com "Tentar de novo") e "Persistência indisponível". "Persistência concedida" é um botão desligado.
 - Depois da primeira importação de cada abertura, o app pede persistência sozinho (sem pergunta na tela, no Safari e no Chrome). Assim os mangás ficam protegidos mesmo que ninguém abra Ajustes.
+- Leitor: janela fixa de páginas (uma antes, duas depois), sem medir a memória do aparelho (o Safari não informa). A página nova só troca depois de decodificada.
+- Leitor: abre com os controles visíveis, exceto na primeira leitura, que mostra a dica de direção por 3 s com os controles escondidos. A dica aparece uma vez só, para o app todo.
+- Leitor: volume lido ou nunca aberto começa da página 1; em leitura, volta à página salva. O progresso é salvo a cada página.
+- Leitor: o slider pula para a página só ao soltar (arrastar mostra o número, sem extrair cada página do caminho). O slider vai sempre da esquerda para a direita, mesmo em mangá, como no Figma.
+- Leitor: avançar na última página mostra "Você chegou ao fim do volume." até o brinde e o próximo volume da 3c. Marcar, Ajustar à tela e Opções avisam que chegam na 3b; Anotar, na etapa 4.
+- Leitor: até as opções por série (3b), todo volume lê da direita para a esquerda.
+- Título do volume no leitor em Lora Bold, como no Figma (fonte nova, OFL, em `assets/fonts`).

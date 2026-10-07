@@ -5,7 +5,7 @@
 // está inteiro. Assim o app nunca mistura arquivos de duas versões.
 // TODA mudança em estante/ que vai para a main precisa subir VERSAO (e um arquivo novo entra em ARQUIVOS).
 
-const VERSAO = '2c-1';
+const VERSAO = '3a-1';
 const CACHE = `estante-${VERSAO}`;
 
 const ARQUIVOS = [
@@ -25,6 +25,7 @@ const ARQUIVOS = [
   'js/importacao.js',
   'js/offline.js',
   'js/armazenamento.js',
+  'js/paginas.js',
   'js/views/estante.js',
   'js/views/favoritos.js',
   'js/views/ajustes.js',
@@ -32,26 +33,32 @@ const ARQUIVOS = [
   'js/views/importar.js',
   'js/views/dados.js',
   'js/views/instalar.js',
+  'js/views/leitor.js',
   'assets/apple-touch-icon.png',
   'assets/icon-192.png',
   'assets/icon-512.png',
   'assets/fonts/inter-latin-400-normal.woff2',
   'assets/fonts/inter-latin-500-normal.woff2',
   'assets/fonts/inter-latin-600-normal.woff2',
+  'assets/fonts/lora-latin-700-normal.woff2',
   'assets/fonts/playfair-display-latin-700-normal.woff2',
   'assets/icons/anel-girando.svg',
   'assets/icons/app-icon.svg',
+  'assets/icons/arrow-left.svg',
   'assets/icons/arquivos-zip.svg',
   'assets/icons/books.svg',
   'assets/icons/heart.svg',
   'assets/icons/heart-active.svg',
   'assets/icons/heart-filled.svg',
   'assets/icons/lock.svg',
+  'assets/icons/maximize.svg',
+  'assets/icons/pen.svg',
   'assets/icons/pin.svg',
   'assets/icons/planet.svg',
   'assets/icons/planeta-original.svg',
   'assets/icons/search.svg',
   'assets/icons/settings.svg',
+  'assets/icons/sliders-horizontal.svg',
   'assets/icons/sort.svg',
   'assets/icons/tartan-corner.svg',
   'assets/icons/tartan-strip.svg',
