@@ -1,7 +1,6 @@
-// Tela "Dados e app": espaço, persistência, instalação e disponibilidade offline.
-// Backup e Gerenciar volumes entram na etapa 4.
+// Tela "Dados e app": espaço, persistência, instalação, disponibilidade offline e backup.
 
-import { estado } from '../store.js';
+import { estado, paginasAnotadas } from '../store.js';
 import { esc, icone, plural, tamanhoLegivel } from '../ui.js';
 import { instalado } from '../offline.js';
 
@@ -31,6 +30,8 @@ function cartaoEspaco() {
   const total = estado.volumes.length;
   const semArquivo = estado.volumes.filter((v) => !v.temArquivo).length;
   const partes = [plural(total, 'volume', 'volumes')];
+  const anotadas = paginasAnotadas();
+  if (anotadas) partes.push(plural(anotadas, 'página anotada', 'páginas anotadas'));
   if (semArquivo) partes.push(`${semArquivo} sem arquivo`);
   if (cota) partes.push(`limite de ${tamanhoLegivel(cota)}`);
 
@@ -38,7 +39,8 @@ function cartaoEspaco() {
   const barra = `<div class="uso" role="meter" aria-label="Espaço usado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(fracao * 100)}" style="--uso:${fracao.toFixed(4)}">
     <span class="uso__preenchido"></span>
   </div>`;
-  return cartao(`${tamanhoLegivel(usado)} usados`, partes.join(' · '), barra);
+  const gerenciar = estado.volumes.some((v) => v.temArquivo) ? botao('Gerenciar volumes', 'gerenciar') : '';
+  return cartao(`${tamanhoLegivel(usado)} usados`, partes.join(' · '), barra + gerenciar);
 }
 
 function cartaoPersistencia() {
@@ -67,12 +69,17 @@ export function renderDados() {
   </header>
   <div class="rolagem" data-rolagem="dados">
     <div class="importar">
+      ${estado.avisoDeDados ? `<div role="status">${cartao(estado.avisoDeDados.titulo, estado.avisoDeDados.texto)}</div>` : ''}
       <h2 class="importar__titulo">Sua coleção, no aparelho</h2>
       <p class="importar__texto">Arquivos, progresso e anotações ficam disponíveis aqui.</p>
       ${cartaoEspaco()}
       <div aria-live="polite">${cartaoPersistencia()}</div>
       ${instalado() ? '' : cartao('Ler como app', 'Instale na tela de início para abrir sem barras do navegador.', botao('Como instalar', 'como-instalar'))}
       <div aria-live="polite">${cartao(tituloOffline, textoOffline)}</div>
+      ${cartao('Progresso e anotações', 'Exporte um JSON. O backup não inclui os arquivos CBZ ou ZIP.', `<div class="par-de-botoes">
+        ${botao('Exportar JSON', 'exportar-backup')}
+        ${botao('Importar JSON', 'importar-backup')}
+      </div>`)}
     </div>
   </div>
   <div class="rodape-acao"><button class="botao" type="button" data-acao="ir" data-destino="biblioteca">Voltar à estante</button></div>`;

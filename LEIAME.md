@@ -50,7 +50,7 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Os SVGs de `assets/icons/` são os exportados do Figma, sem alteração. A cor é aplicada por máscara no CSS, para seguir o tema.
 - `js/store.js` guarda o estado e o que fica salvo no aparelho. As telas em `js/views/` só leem do store e devolvem HTML; os toques são tratados em `js/app.js`.
 - `js/db.js` é o IndexedDB: a loja `volumes` (série, progresso, marcas, miniatura da capa, índice das páginas) e a loja `arquivos` (o CBZ/ZIP original, na mesma chave). Remover do aparelho apaga só a segunda.
-- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-3c-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
+- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-4a-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
 - `js/offline.js` registra o service worker e pergunta a ele se o cache está completo, para mostrar "Pronto para usar offline" em Ajustes → Dados, armazenamento e backup. No Live Server (`127.0.0.1`) o service worker fica desligado, para cada recarga mostrar o código editado; para testar o offline no computador, abra `http://127.0.0.1:5500/?offline`.
 - `js/armazenamento.js` lê o espaço usado e a cota (`navigator.storage.estimate`) e a persistência (`persisted`/`persist`) para a tela Dados e app.
 - `js/paginas.js` extrai as páginas do CBZ guardado para o leitor, só numa janela em volta da atual (uma antes, duas depois); o resto tem o object URL revogado. `js/views/leitor.js` é o leitor: uma camada sobre o app que troca só a imagem e os textos a cada página.
@@ -62,7 +62,7 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 1. **Estante, Favoritos, Ajustes, temas e folha de ações** (feita).
 2. Importação de CBZ/ZIP, armazenamento, instalação e uso offline, em três partes: 2a importar e guardar, 2b instalar e usar offline e 2c armazenamento (entregues, em teste no iPhone).
 3. Leitor, em três partes: 3a ler, 3b zoom e opções por série, 3c fim do volume, página dupla e tela ligada (entregues, em teste no iPhone).
-4. Anotações, backup e gestão de espaço.
+4. Em duas partes: 4a gestão de espaço e backup (entregue, em teste no iPhone); 4b anotações.
 
 ## Decisões tomadas onde o Figma não definia
 
@@ -86,7 +86,6 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Estados do cartão do offline que o Figma não mostra: "Conferindo…", "Preparando o uso offline…", "Uso offline indisponível" e, no computador, "Uso offline desligado".
 - No Safari do iPhone, fora da tela de início, a tela "Adicionar mangá" mostra "Instale antes de importar": o app instalado guarda os dados separado do Safari, e importar antes de instalar obrigaria a importar de novo.
 - Espaço no aparelho: a segunda linha mostra volumes, quantos estão sem arquivo e o limite do navegador ("2 volumes · limite de 10,7 GB"); a barra é o uso sobre esse limite, com 4 px mínimos para não sumir. As "páginas anotadas" do Figma entram com as anotações (etapa 4).
-- "Gerenciar volumes" e "Progresso e anotações" (backup) ainda não aparecem: são da etapa 4.
 - Persistência: além de "Armazenamento local padrão" e "Persistência ativa" do Figma, há "Persistência não concedida" (com "Tentar de novo") e "Persistência indisponível". "Persistência concedida" é um botão desligado.
 - Depois da primeira importação de cada abertura, o app pede persistência sozinho (sem pergunta na tela, no Safari e no Chrome). Assim os mangás ficam protegidos mesmo que ninguém abra Ajustes.
 - Leitor: janela fixa de páginas (uma antes, duas depois), sem medir a memória do aparelho (o Safari não informa). A página nova só troca depois de decodificada.
@@ -109,3 +108,6 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Deitado, o leitor usa o cabeçalho de uma linha e só a posição embaixo, como o frame "página dupla em paisagem", em qualquer modo de página. Slider, ferramentas e Opções ficam para a leitura em pé. O leitor ocupa a janela inteira (a coluna de 480 px do app não vale para ele).
 - Manter tela acesa (Wake Lock): opção por série, desligada por padrão. O pedido sai do toque no botão; ao voltar para o app a trava é pedida de novo; recusa ("Tentar de novo") e indisponibilidade aparecem no cartão.
 - O leitor segura os toques até sumir e não gera clique: sem isso, o toque que conclui o volume caía na capa de baixo e reabria o volume.
+- Gerenciar volumes: abre com os volumes concluídos já marcados (são os que liberam espaço sem perder nada); o cartão inteiro marca e desmarca. "Remover" pede um segundo toque, como na folha de ações. Só aparecem volumes com arquivo no aparelho.
+- Backup JSON (`versao: 1`): progresso, lido em, favorito, oculto, marcadores, anotações e as opções por série. Nunca os CBZ nem as capas. No iPhone, "Exportar JSON" abre a folha de compartilhar ("Salvar em Arquivos"); no computador, baixa o arquivo `estante-backup-AAAA-MM-DD.json`.
+- Restaurar: confere `app` e `versao` (versão mais nova é recusada) e acha cada volume pelo ID ou, se o app foi reinstalado, pela série e número. Volume que não está no aparelho entra como "Arquivo removido", com o progresso; ao importar o CBZ, ele volta com tudo. O resultado ("Backup pronto", "Backup restaurado", "Backup não restaurado") aparece no topo de Dados e app enquanto a pessoa está lá.

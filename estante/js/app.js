@@ -3,6 +3,7 @@
 import {
   estado, assinar, carregar, volume, definirTema, definirFiltro, definirBusca, proximaOrdem, definirOculto, mostrarOcultos,
   removerArquivo, importar, importando, encerrarImportacao, abrirCorrecao, corrigirResultado,
+  prepararGerenciar, alternarParaRemover, removerArquivos, montarBackup, restaurarBackup, ErroDeBackup, definirAvisoDeDados,
 } from './store.js';
 import { renderEstante, renderColecao, renderCarregando } from './views/estante.js';
 import { renderFavoritos } from './views/favoritos.js';
@@ -10,10 +11,11 @@ import { renderAjustes } from './views/ajustes.js';
 import { renderImportar } from './views/importar.js';
 import { renderDados } from './views/dados.js';
 import { renderInstalar } from './views/instalar.js';
+import { renderGerenciar } from './views/gerenciar.js';
 import { abrirFolha, folhaAberta } from './views/folha.js';
 import { abrirLeitor } from './views/leitor.js';
 import { renderBrinde } from './views/brinde.js';
-import { iniciarOffline } from './offline.js';
+import { iniciarOffline, safariDoIos } from './offline.js';
 import { atualizarArmazenamento, pedirPersistencia, garantirPersistencia } from './armazenamento.js';
 
 const app = document.getElementById('app');
@@ -21,10 +23,11 @@ const tela = document.getElementById('tela');
 const nav = document.getElementById('nav');
 const aviso = document.getElementById('aviso');
 const seletor = document.getElementById('seletor');
+const seletorBackup = document.getElementById('seletor-backup');
 
-const DESTINOS = ['biblioteca', 'favoritos', 'ajustes', 'importar', 'dados', 'instalar'];
+const DESTINOS = ['biblioteca', 'favoritos', 'ajustes', 'importar', 'dados', 'instalar', 'gerenciar'];
 // Telas cheias, com voltar e ação embaixo no lugar da navegação inferior (como no Figma)
-const TELAS_CHEIAS = ['importar', 'dados', 'instalar'];
+const TELAS_CHEIAS = ['importar', 'dados', 'instalar', 'gerenciar'];
 const TOQUE_LONGO = 400; // ms, como na especificação
 
 const ui = {
@@ -33,6 +36,7 @@ const ui = {
   concluido: null, // { id, proximoId, automatico }: a Biblioteca mostra o brinde
   recemFavoritados: new Set(), // para o pulso do coração ao abrir Favoritos
   voltarDaInstalacao: 'dados', // "Instalar app" abre de Dados e app ou da importação
+  confirmandoRemocao: false, // "Gerenciar volumes": o primeiro toque em Remover só pede confirmação
 };
 
 // ---------- Tema ----------
@@ -86,6 +90,8 @@ function render({ manterRolagem = true } = {}) {
     tela.innerHTML = renderDados();
   } else if (ui.destino === 'instalar') {
     tela.innerHTML = renderInstalar();
+  } else if (ui.destino === 'gerenciar') {
+    tela.innerHTML = renderGerenciar({ confirmando: ui.confirmandoRemocao });
   } else if (ui.destino === 'favoritos') {
     tela.innerHTML = renderFavoritos({ recemFavoritados: ui.recemFavoritados });
     ui.recemFavoritados = new Set();
@@ -111,6 +117,8 @@ function render({ manterRolagem = true } = {}) {
 function ir(destino) {
   if (!DESTINOS.includes(destino)) return;
   const mudou = destino !== ui.destino;
+  // O resultado do backup vale só enquanto a pessoa está em Dados e app
+  if (ui.destino === 'dados' && destino !== 'dados' && destino !== 'gerenciar') estado.avisoDeDados = null;
   ui.destino = destino;
   ui.ocultoAgora = null;
   ui.concluido = null;
@@ -234,6 +242,93 @@ function abrirVolume(id, { continuacao = false } = {}) {
   });
 }
 
+// ---------- Gerenciar volumes e backup ----------
+
+function abrirGerenciar() {
+  prepararGerenciar();
+  ui.confirmandoRemocao = false;
+  ir('gerenciar');
+}
+
+async function removerMarcados() {
+  if (!ui.confirmandoRemocao) {
+    ui.confirmandoRemocao = true;
+    render();
+    return;
+  }
+  ui.confirmandoRemocao = false;
+  try {
+    const removidos = await removerArquivos([...estado.paraRemover]);
+    avisar(`${removidos === 1 ? '1 arquivo removido' : `${removidos} arquivos removidos`}. O progresso continua salvo.`);
+  } catch (erro) {
+    console.error(erro);
+    avisar('Não deu para remover todos os arquivos.');
+  }
+  ir('dados');
+  atualizarArmazenamento();
+}
+
+const dataDeHoje = () => new Date().toLocaleDateString('sv-SE'); // 2026-10-07
+
+function mostrarResultadoDoBackup(aviso) {
+  definirAvisoDeDados(aviso);
+  tela.querySelector('[data-rolagem]')?.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function exportarBackup() {
+  const nome = `estante-backup-${dataDeHoje()}.json`;
+  const arquivo = new File([JSON.stringify(montarBackup(), null, 2)], nome, { type: 'application/json' });
+  const pronto = () => mostrarResultadoDoBackup({
+    titulo: 'Backup pronto',
+    texto: 'Progresso e anotações exportados em JSON. Guarde o arquivo fora deste aparelho.',
+  });
+
+  // No iPhone, a folha de compartilhar tem "Salvar em Arquivos"; no computador, um download comum
+  if (safariDoIos() && navigator.canShare?.({ files: [arquivo] })) {
+    navigator.share({ files: [arquivo], title: 'Backup da Estante' })
+      .then(pronto)
+      .catch((erro) => {
+        if (erro?.name !== 'AbortError') avisar('Não deu para compartilhar o backup.');
+      });
+    return;
+  }
+  const url = URL.createObjectURL(arquivo);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nome;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  pronto();
+}
+
+seletorBackup.addEventListener('change', async () => {
+  const [arquivo] = seletorBackup.files;
+  seletorBackup.value = '';
+  if (!arquivo) return;
+  try {
+    let dados;
+    try {
+      dados = JSON.parse(await arquivo.text());
+    } catch {
+      throw new ErroDeBackup('O arquivo não é um JSON válido.');
+    }
+    const { novos } = await restaurarBackup(dados);
+    mostrarResultadoDoBackup({
+      titulo: 'Backup restaurado',
+      texto: `Progresso e anotações restaurados a partir do JSON. Os arquivos de mangá continuam separados.${novos
+        ? ` ${novos === 1 ? '1 volume volta' : `${novos} volumes voltam`} quando você importar o arquivo de novo.` : ''}`,
+    });
+  } catch (erro) {
+    if (!(erro instanceof ErroDeBackup)) console.error(erro);
+    mostrarResultadoDoBackup({
+      titulo: 'Backup não restaurado',
+      texto: erro instanceof ErroDeBackup ? erro.message : 'Não deu para gravar o backup no aparelho.',
+    });
+  }
+});
+
 // ---------- Folha de ações ----------
 
 function abrirAcoes(id) {
@@ -317,6 +412,13 @@ tela.addEventListener('click', (evento) => {
     ir('instalar');
   } else if (acao === 'fechar-instalacao') ir(ui.voltarDaInstalacao);
   else if (acao === 'pedir-persistencia') pedirPersistencia();
+  else if (acao === 'gerenciar') abrirGerenciar();
+  else if (acao === 'marcar-para-remover') {
+    ui.confirmandoRemocao = false;
+    alternarParaRemover(id);
+  } else if (acao === 'remover-marcados') removerMarcados();
+  else if (acao === 'exportar-backup') exportarBackup();
+  else if (acao === 'importar-backup') seletorBackup.click();
   else if (acao === 'filtro') definirFiltro(alvo.dataset.filtro);
   else if (acao === 'ordenar') proximaOrdem();
   else if (acao === 'tema') definirTema(alvo.dataset.tema);

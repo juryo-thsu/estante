@@ -27,6 +27,7 @@
 .icone--maximize { -webkit-mask-image: url("../assets/icons/maximize.svg"); mask-image: url("../assets/icons/maximize.svg"); }
 .icone--sliders-horizontal { -webkit-mask-image: url("../assets/icons/sliders-horizontal.svg"); mask-image: url("../assets/icons/sliders-horizontal.svg"); }
 .icone--pen { -webkit-mask-image: url("../assets/icons/pen.svg"); mask-image: url("../assets/icons/pen.svg"); }
+.icone--check { -webkit-mask-image: url("../assets/icons/check.svg"); mask-image: url("../assets/icons/check.svg"); }
 .icone--anel-girando { -webkit-mask-image: url("../assets/icons/anel-girando.svg"); mask-image: url("../assets/icons/anel-girando.svg"); }
 .icone--16 { width: 16px; height: 16px; }
 .icone--20 { width: 20px; height: 20px; }
@@ -178,6 +179,47 @@
 }
 .botao:disabled {
   cursor: default;
+}
+
+.rodape-acao .botao:disabled {
+  opacity: 0.5;
+}
+
+/* Cartão que se marca inteiro ("Gerenciar volumes") */
+.selecao {
+  width: 100%;
+  text-align: left;
+}
+.selecao__linha {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  height: 36px;
+}
+.selecao__caixa {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-4);
+  background: var(--color-elevated);
+  color: var(--color-accent);
+}
+.selecao[aria-pressed="true"] .selecao__caixa {
+  border-color: var(--color-elevated);
+}
+.selecao__nome {
+  min-width: 0;
+  overflow: hidden;
+  font: var(--t-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.selecao__detalhe {
+  color: var(--color-muted);
+  font: var(--t-small);
 }
 
 /* ---------- Campo de texto ---------- */

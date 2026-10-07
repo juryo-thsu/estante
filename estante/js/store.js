@@ -34,6 +34,10 @@ export const estado = {
   offline: 'verificando',
   /** navigator.storage: `{ suportado, usado, cota, persistente, recusada }`; vazio até a primeira leitura. */
   armazenamento: {},
+  /** Resultado do último backup, mostrado no topo de Dados e app: `{ tipo, titulo, texto }` ou null. */
+  avisoDeDados: null,
+  /** Volumes marcados em "Gerenciar volumes". */
+  paraRemover: new Set(),
 };
 
 function salvarPreferencias() {
@@ -285,6 +289,135 @@ export async function removerArquivo(id) {
   await db.removerArquivo(atualizado);
   Object.assign(v, atualizado);
   avisar();
+}
+
+/** Remove vários arquivos de uma vez ("Gerenciar volumes"). Devolve quantos saíram. */
+export async function removerArquivos(ids) {
+  let removidos = 0;
+  for (const id of ids) {
+    const v = volume(id);
+    if (!v?.temArquivo) continue;
+    const atualizado = { ...registro(v), temArquivo: false, paginasDoArquivo: null };
+    await db.removerArquivo(atualizado);
+    Object.assign(v, atualizado);
+    removidos++;
+  }
+  estado.paraRemover.clear();
+  avisar();
+  return removidos;
+}
+
+// ---------- Gerenciar volumes ----------
+
+/** Ao abrir a tela, os concluídos já vêm marcados: são os que liberam espaço sem perder nada. */
+export function prepararGerenciar() {
+  estado.paraRemover = new Set(estado.volumes.filter((v) => v.temArquivo && lido(v)).map((v) => v.id));
+}
+
+export function alternarParaRemover(id) {
+  if (estado.paraRemover.has(id)) estado.paraRemover.delete(id);
+  else estado.paraRemover.add(id);
+  avisar();
+}
+
+// ---------- Backup (JSON) ----------
+// Progresso, marcadores, anotações e opções por série. Nunca os CBZ/ZIP nem as capas.
+
+const VERSAO_DO_BACKUP = 1;
+
+/** Páginas com anotação, somadas em todos os volumes (para "N páginas anotadas"). */
+export function paginasAnotadas() {
+  return estado.volumes.reduce((total, v) => total + new Set((v.anotacoes || []).map((a) => a.pagina)).size, 0);
+}
+
+export function montarBackup() {
+  return {
+    app: 'estante',
+    versao: VERSAO_DO_BACKUP,
+    exportadoEm: new Date().toISOString(),
+    series: estado.series,
+    volumes: estado.volumes.map((v) => ({
+      id: v.id,
+      serie: v.serie,
+      numero: v.numero,
+      paginas: v.paginas,
+      pagina: v.pagina,
+      lidoEm: v.lidoEm ?? null,
+      favorito: Boolean(v.favorito),
+      oculto: Boolean(v.oculto),
+      marcadores: v.marcadores || [],
+      anotacoes: v.anotacoes || [],
+    })),
+  };
+}
+
+export function definirAvisoDeDados(aviso) {
+  estado.avisoDeDados = aviso;
+  avisar();
+}
+
+export class ErroDeBackup extends Error {}
+
+const numeroValido = (n) => typeof n === 'number' && Number.isFinite(n) && n >= 0;
+
+/**
+ * Restaura um backup. Cada volume é achado pelo ID ou, se o app foi reinstalado (IDs novos),
+ * pela série e número. Volume que não está no aparelho entra só com os dados, como
+ * "Arquivo removido": ao importar o CBZ de novo, ele volta com o progresso.
+ */
+export async function restaurarBackup(dados) {
+  if (!dados || dados.app !== 'estante' || !Array.isArray(dados.volumes)) {
+    throw new ErroDeBackup('O arquivo não é um backup da Estante.');
+  }
+  if (!numeroValido(dados.versao) || dados.versao > VERSAO_DO_BACKUP) {
+    throw new ErroDeBackup('Este backup é de uma versão mais nova do app. Atualize e tente de novo.');
+  }
+
+  let restaurados = 0;
+  let novos = 0;
+  for (const item of dados.volumes) {
+    if (typeof item?.id !== 'string' || typeof item.serie !== 'string' || !item.serie.trim() || !numeroValido(item.numero)) continue;
+    const paginas = numeroValido(item.paginas) && item.paginas > 0 ? item.paginas : null;
+    const marcas = {
+      pagina: numeroValido(item.pagina) ? item.pagina : 0,
+      lidoEm: numeroValido(item.lidoEm) ? item.lidoEm : null,
+      favorito: item.favorito === true,
+      oculto: item.oculto === true,
+      marcadores: Array.isArray(item.marcadores) ? item.marcadores.filter(numeroValido) : [],
+      anotacoes: Array.isArray(item.anotacoes) ? item.anotacoes.filter((a) => a && numeroValido(a.pagina)) : [],
+    };
+
+    const local = volume(item.id) || doVolume(item.serie, item.numero);
+    if (local) {
+      const atualizado = { ...registro(local), ...marcas };
+      atualizado.pagina = Math.min(atualizado.pagina, local.paginas || atualizado.pagina);
+      await db.salvarVolume(atualizado);
+      Object.assign(local, atualizado);
+      restaurados++;
+    } else {
+      const novo = {
+        id: item.id,
+        serie: item.serie.trim(),
+        numero: item.numero,
+        paginas: paginas ?? Math.max(1, marcas.pagina),
+        adicionadoEm: Date.now(),
+        temArquivo: false,
+        paginasDoArquivo: null,
+        capaBlob: null,
+        ...marcas,
+      };
+      await db.salvarVolume(novo);
+      estado.volumes.push(comCapa(novo));
+      novos++;
+    }
+  }
+
+  if (dados.series && typeof dados.series === 'object') {
+    estado.series = { ...estado.series, ...dados.series };
+    salvarPreferencias();
+  }
+  avisar();
+  return { restaurados, novos };
 }
 
 // ---------- Importação ----------
