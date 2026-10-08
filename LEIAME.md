@@ -6,6 +6,7 @@ A base de design vem do arquivo do Figma "App · Design e protótipo", com dire�
 ## Design e motion · 0.8.0
 
 - Entrada com composição original de capas, xadrez, borboleta e selo dedicado à Lua, desenhada em CSS/SVG e disponível offline.
+- Boas-vindas (0.8.1): só o título curto e "Trazer meu primeiro mangá". No Safari do iPhone, sem o app instalado, entram antes os três passos para pôr na Tela de Início (o app instalado guarda os mangás separado do Safari).
 - Temas Noite e Morango com contraste revisado, tipografia editorial, cartões de tema ilustrados e novos estados de interação.
 - Navegação com indicador deslizante; entradas em sequência nas telas; capas que se reposicionam ao filtrar, buscar e ordenar; feedback ao pressionar botões e passar o mouse sobre capas.
 - Movimento de 180–220 ms e pequenos atrasos entre elementos. Com `prefers-reduced-motion`, ficam apenas fades curtos; mudar essa preferência também cancela as animações em andamento.

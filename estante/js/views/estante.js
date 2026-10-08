@@ -6,6 +6,7 @@ import {
 import {
   esc, plural, nomeLongo, nomeCurto, porcentagem, quando, icone, capa, cartaoDeVolume, perolas, mensagemVazia,
 } from '../ui.js';
+import { instalado, safariDoIos } from '../offline.js';
 
 const ROTULO_DA_ORDEM = {
   'volume-asc': 'Volume ↑',
@@ -146,7 +147,19 @@ export function renderCarregando() {
   </div>`;
 }
 
+// No iPhone, o app da Tela de Início guarda os mangás separado do Safari:
+// instalar antes de importar evita trazer tudo duas vezes.
+const passosDeInstalacao = () => `<div class="boas-vindas__instalar">
+  <p class="sobretitulo">Antes, põe na Tela de Início</p>
+  <ol class="boas-vindas__passos">
+    <li><span>Toca em <strong>Compartilhar</strong>, no Safari</span></li>
+    <li><span>Escolhe <strong>Adicionar à Tela de Início</strong></span></li>
+    <li><span>Abre pelo ícone <strong>Tsukina</strong></span></li>
+  </ol>
+</div>`;
+
 function telaPrimeiroAcesso() {
+  const pedirInstalacao = safariDoIos() && !instalado();
   return `<div class="rolagem" data-rolagem="boas-vindas">
     <div class="boas-vindas">
       <header class="marca-editorial">
@@ -168,11 +181,9 @@ function telaPrimeiroAcesso() {
           <span class="colagem__selo">com amor,<br><em>pra Lua ♡</em></span>
         </div>
         <section class="boas-vindas__texto" aria-labelledby="boas-vindas-titulo">
-          <p class="sobretitulo">SEU PRÓXIMO CAPÍTULO</p>
           <h1 id="boas-vindas-titulo">Um lugar para<br>suas <em>histórias.</em></h1>
-          <p>Seus mangás, seus favoritos e aquele capítulo que dá vontade de guardar. Tudo juntinho.</p>
-          <button class="botao" type="button" data-acao="adicionar">Trazer meu primeiro mangá <span aria-hidden="true">↗</span></button>
-          <span class="boas-vindas__detalhe">${icone('lock', 16)} Só seu. Até sem internet.</span>
+          ${pedirInstalacao ? passosDeInstalacao() : ''}
+          <button class="botao${pedirInstalacao ? ' botao--secundario' : ''}" type="button" data-acao="adicionar">Trazer meu primeiro mangá <span aria-hidden="true">↗</span></button>
         </section>
       </div>
     </div>
