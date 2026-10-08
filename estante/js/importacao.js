@@ -77,9 +77,9 @@ async function miniatura(imagem) {
  */
 export async function lerVolume(arquivo) {
   if (/\.(cbr|rar)$/i.test(arquivo.name)) {
-    throw new ErroDeImportacao('CBR é um arquivo RAR. Converta para CBZ e tente de novo.');
+    throw new ErroDeImportacao('Esse é CBR, amor. Preciso dele em CBZ.');
   }
-  if (arquivo.size === 0) throw new ErroDeImportacao('O arquivo está vazio.');
+  if (arquivo.size === 0) throw new ErroDeImportacao('Esse arquivo tá vazinho.');
 
   let entradas;
   try {
@@ -89,14 +89,14 @@ export async function lerVolume(arquivo) {
     // a assinatura "PK" no começo do arquivo separa os dois casos.
     const comeco = new Uint8Array(await arquivo.slice(0, 2).arrayBuffer());
     const pareceZip = comeco[0] === 0x50 && comeco[1] === 0x4b;
-    if (erro.codigo === 'nao-zip' && !pareceZip) throw new ErroDeImportacao('Não é um arquivo CBZ ou ZIP.');
-    throw new ErroDeImportacao('O arquivo está corrompido ou incompleto.');
+    if (erro.codigo === 'nao-zip' && !pareceZip) throw new ErroDeImportacao('Esse não é CBZ nem ZIP, Lulu.');
+    throw new ErroDeImportacao('Esse arquivo veio quebradinho ou pela metade.');
   }
 
   const imagens = entradas.filter((e) => !e.nome.endsWith('/') && !deSistema(e.nome) && tipoDaImagem(e.nome));
-  if (imagens.length === 0) throw new ErroDeImportacao('O ZIP não contém imagens compatíveis.');
-  if (imagens.some((e) => e.cifrado)) throw new ErroDeImportacao('O ZIP tem senha e não pode ser aberto.');
-  if (!imagens.every(legivel)) throw new ErroDeImportacao('O ZIP usa uma compressão que o app não lê.');
+  if (imagens.length === 0) throw new ErroDeImportacao('Não achei nenhuma página aqui dentro.');
+  if (imagens.some((e) => e.cifrado)) throw new ErroDeImportacao('Esse ZIP tem senha, não consigo abrir.');
+  if (!imagens.every(legivel)) throw new ErroDeImportacao('Esse ZIP foi compactado de um jeito que eu não leio.');
 
   imagens.sort((a, b) => colador.compare(a.nome, b.nome));
 
@@ -104,7 +104,7 @@ export async function lerVolume(arquivo) {
   try {
     capa = await miniatura(await lerEntrada(arquivo, imagens[0], tipoDaImagem(imagens[0].nome)));
   } catch {
-    throw new ErroDeImportacao('Não deu para ler a primeira página. O arquivo pode estar corrompido.');
+    throw new ErroDeImportacao('Não consegui abrir a primeira página. Acho que o arquivo tá quebradinho.');
   }
 
   return {

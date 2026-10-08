@@ -42,7 +42,7 @@ function modelo(v, pagina, capitulo, url) {
     </div>
     <div class="editor__visibilidade">
       <button class="editor__olho" type="button" data-editor="original">${icone('olho', 18)}<span class="editor__olho-rotulo">Ver original</span></button>
-      <p class="editor__preservado">Original preservado</p>
+      <p class="editor__preservado">A página fica intacta</p>
     </div>
     <div class="editor__ferramentas">
       <div class="editor__selecao" role="group" aria-label="Ferramenta">
@@ -61,7 +61,7 @@ function modelo(v, pagina, capitulo, url) {
     </div>
     <div class="editor__observacao">
       <label class="editor__rotulo" for="editor-observacao">Observação</label>
-      <input class="editor__campo" id="editor-observacao" type="text" autocomplete="off" enterkeyhint="done" placeholder="Escreva uma observação sobre a página">
+      <input class="editor__campo" id="editor-observacao" type="text" autocomplete="off" enterkeyhint="done" placeholder="O que essa página te fez sentir?">
     </div>`;
 }
 
@@ -73,7 +73,7 @@ export async function abrirEditor(id, pagina, { raiz, avisar, aoSalvar = () => {
   const v = volume(id);
   if (!v || aberto) return;
   if (!v.temArquivo) {
-    avisar('Importe o CBZ ou ZIP de novo para anotar este volume.');
+    avisar('Esse precisa do arquivo de novo pra anotar, amor.');
     return;
   }
   aberto = { id };
@@ -84,7 +84,7 @@ export async function abrirEditor(id, pagina, { raiz, avisar, aoSalvar = () => {
   } catch (erro) {
     console.error(erro);
     aberto = null;
-    avisar('Não deu para abrir esta página.');
+    avisar('Essa página não quis abrir, amor.');
     return;
   }
 
@@ -145,7 +145,7 @@ export async function abrirEditor(id, pagina, { raiz, avisar, aoSalvar = () => {
     $('[data-editor="desfazer"]').disabled = desfeitos.length === 0;
     $('[data-editor="refazer"]').disabled = refeitos.length === 0;
     $('.editor__olho-rotulo').textContent = mostrarMarcas ? 'Ver original' : 'Mostrar marcas';
-    situacao.textContent = alterado || !existente ? 'Não salvo' : 'Salvo';
+    situacao.textContent = alterado || !existente ? 'Ainda não salvei' : 'Guardado';
     folha.dataset.ferramenta = ferramenta;
   }
 

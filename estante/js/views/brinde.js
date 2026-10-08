@@ -8,20 +8,20 @@ const copo = (lado) => `<img class="brinde__copo brinde__copo--${lado}" src="ass
 
 export function renderBrinde(v, proximo, { automatico = false } = {}) {
   const linhas = proximo
-    ? ['Seu lugar está salvo.', automatico ? 'Abrindo o próximo volume…' : 'O próximo volume já está na estante.']
-    : ['Seu lugar está salvo.', 'Este é o último volume da série no aparelho.'];
+    ? ['Guardei tudo direitinho.', automatico ? 'Já abrindo o próximo, amor…' : 'O próximo já tá te esperando.']
+    : ['Guardei tudo direitinho.', 'Era o último que você tem dessa série, xuxu.'];
 
-  return `<header class="cabecalho"><h1 class="titulo">Sua leitura</h1></header>
+  return `<header class="cabecalho"><h1 class="titulo">Mais um, Lua!</h1></header>
   <div class="rolagem">
     <div class="brinde" role="status">
       <div class="brinde__copos" aria-hidden="true">${copo('esquerdo')}${copo('direito')}</div>
-      <h2 class="brinde__titulo">Volume concluído</h2>
+      <h2 class="brinde__titulo">Volume terminado!</h2>
       <p class="brinde__volume">${esc(nomeLongo(v))}</p>
       <p class="brinde__texto">${linhas.map(esc).join('<br>')}</p>
       ${proximo
-        ? `<button class="botao botao--brinde" type="button" data-acao="abrir-proximo" data-id="${esc(proximo.id)}">Abrir Volume ${esc(doisDigitos(proximo.numero))}</button>
-           <button class="brinde__voltar" type="button" data-acao="fim-do-brinde">Voltar à biblioteca</button>`
-        : '<button class="botao botao--brinde" type="button" data-acao="fim-do-brinde">Voltar à biblioteca</button>'}
+        ? `<button class="botao botao--brinde" type="button" data-acao="abrir-proximo" data-id="${esc(proximo.id)}">Ler o Volume ${esc(doisDigitos(proximo.numero))}</button>
+           <button class="brinde__voltar" type="button" data-acao="fim-do-brinde">Voltar pra estante</button>`
+        : '<button class="botao botao--brinde" type="button" data-acao="fim-do-brinde">Voltar pra estante</button>'}
     </div>
   </div>`;
 }

@@ -6,10 +6,10 @@ import { esc, nomeLongo, icone, tamanhoLegivel } from '../ui.js';
 let aberta = null; // { camada, folha, id, quemAbriu, aoFechar }
 
 function posicao(v) {
-  const onde = v.temArquivo ? 'no seu aparelho' : 'arquivo removido';
-  if (naoLido(v)) return `Ainda não lido · ${onde}`;
-  if (lido(v)) return `Lido · ${v.paginas} páginas · ${onde}`;
-  return `Página ${v.pagina} de ${v.paginas} · ${onde}`;
+  const onde = v.temArquivo ? '' : ' · sem arquivo agora';
+  if (naoLido(v)) return `Ainda não lido${onde}`;
+  if (lido(v)) return `Lido · ${v.paginas} páginas${onde}`;
+  return `Página ${v.pagina} de ${v.paginas}${onde}`;
 }
 
 function acaoFavorito(v, pulsar = false) {
@@ -28,9 +28,9 @@ function conteudo(v) {
     ${acaoFavorito(v)}
     <button class="acao" type="button" data-acao-folha="anotacoes">${icone('pin')}<span>Páginas e anotações</span></button>
     <button class="acao" type="button" data-acao-folha="lido"><span>${lido(v) ? 'Marcar como não lido' : 'Marcar como lido'}</span></button>
-    <button class="acao" type="button" data-acao-folha="ocultar">${icone('lock')}<span>Ocultar volume</span></button>
-    ${v.temArquivo ? '<button class="acao" type="button" data-acao-folha="remover"><span>Remover do aparelho</span></button>' : ''}
-    <button class="botao botao--secundario" type="button" data-acao-folha="fechar">Concluir</button>`;
+    <button class="acao" type="button" data-acao-folha="ocultar">${icone('lock')}<span>Esconder volume</span></button>
+    ${v.temArquivo ? '<button class="acao" type="button" data-acao-folha="remover"><span>Remover arquivo</span></button>' : ''}
+    <button class="botao botao--secundario" type="button" data-acao-folha="fechar">Pronto</button>`;
 }
 
 /**
@@ -86,7 +86,7 @@ export function abrirFolha(id, { raiz, aoAgir = () => {} } = {}) {
     if (acao === 'remover' && !alvo.hasAttribute('data-confirmar')) {
       alvo.setAttribute('data-confirmar', '');
       alvo.classList.add('acao--confirmar');
-      alvo.querySelector('span').textContent = `Toque de novo para remover · ${tamanhoLegivel(volume(id).tamanho)}`;
+      alvo.querySelector('span').textContent = `Tem certeza, amor? Toque de novo · ${tamanhoLegivel(volume(id).tamanho)}`;
       return;
     }
 

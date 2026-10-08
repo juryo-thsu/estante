@@ -386,10 +386,10 @@ const numeroValido = (n) => typeof n === 'number' && Number.isFinite(n) && n >= 
  */
 export async function restaurarBackup(dados) {
   if (!dados || dados.app !== 'estante' || !Array.isArray(dados.volumes)) {
-    throw new ErroDeBackup('O arquivo não é um backup da Estante.');
+    throw new ErroDeBackup('Esse arquivo não é um backup da Tsukina, amor.');
   }
   if (!numeroValido(dados.versao) || dados.versao > VERSAO_DO_BACKUP) {
-    throw new ErroDeBackup('Este backup é de uma versão mais nova do app. Atualize e tente de novo.');
+    throw new ErroDeBackup('Esse backup é de uma Tsukina mais nova. Abre o app de novo e tenta outra vez.');
   }
 
   let restaurados = 0;
@@ -532,14 +532,14 @@ async function importarUm(item) {
     item.situacao = 'erro';
     if (erro instanceof ErroDeImportacao) {
       item.mensagem = erro.message;
-      item.rotulo = 'Arquivo inválido';
+      item.rotulo = 'Não deu';
     } else if (erro?.name === 'QuotaExceededError') {
-      item.mensagem = 'Falta espaço no aparelho para este volume.';
+      item.mensagem = 'Acabou o espaço, amor. Libera um pouquinho e tenta de novo.';
       item.rotulo = 'Sem espaço';
     } else {
       console.error(erro);
-      item.mensagem = 'Não deu para guardar este arquivo no aparelho.';
-      item.rotulo = 'Erro ao salvar';
+      item.mensagem = 'Não consegui guardar esse, desculpa.';
+      item.rotulo = 'Não deu';
     }
   }
 }
@@ -570,8 +570,8 @@ export function corrigirResultado(chave, serieDigitada, numeroDigitado) {
   const serie = serieDigitada.trim().replace(/\s+/g, ' ');
   const numero = Number(String(numeroDigitado).trim().replace(',', '.'));
   let erro = null;
-  if (!serie) erro = 'Escreva o nome da série.';
-  else if (String(numeroDigitado).trim() === '' || !Number.isFinite(numero) || numero < 0) erro = 'O volume precisa ser um número.';
+  if (!serie) erro = 'Qual o nome da série, amor?';
+  else if (String(numeroDigitado).trim() === '' || !Number.isFinite(numero) || numero < 0) erro = 'O volume tem que ser um número, xuxu.';
   else {
     const outro = doVolume(serie, numero);
     if (outro && outro !== v) erro = `${outro.serie} · Volume ${String(numero).padStart(2, '0')} já está na estante.`;

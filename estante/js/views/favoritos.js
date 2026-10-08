@@ -13,10 +13,10 @@ export function renderFavoritos({ recemFavoritados = new Set() } = {}) {
       <div class="conteudo">
         ${mensagemVazia({
           nomeIcone: 'heart',
-          titulo: 'Ainda sem favoritos',
-          linhas: ['Algumas histórias ficam com a gente.', 'Guarde um volume pelo coração no menu da capa.'],
+          titulo: 'Nenhum favorito ainda',
+          linhas: ['Quando um volume roubar seu coração,', 'ele aparece aqui, amorzinho.'],
         })}
-        <button class="botao" type="button" data-acao="ir" data-destino="biblioteca">Explorar biblioteca</button>
+        <button class="botao" type="button" data-acao="ir" data-destino="biblioteca">Ver a estante</button>
       </div>
     </div>`;
   }
@@ -24,7 +24,7 @@ export function renderFavoritos({ recemFavoritados = new Set() } = {}) {
   return `${cabecalho}
   <div class="rolagem" data-rolagem="favoritos">
     <div class="conteudo">
-      <p class="introducao">Os volumes que merecem ficar por perto.</p>
+      <p class="introducao">Os seus queridinhos, Lua.</p>
       <div class="grade">
         ${lista.map((v) => cartaoDeVolume(v, { favorito: true, pulsar: recemFavoritados.has(v.id) })).join('')}
       </div>

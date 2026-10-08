@@ -158,7 +158,7 @@ function ir(destino) {
 
 assinar((motivo) => {
   if (motivo === 'erro-gravacao') {
-    avisar('Não deu para salvar no aparelho. Confira o espaço livre.');
+    avisar('Não consegui salvar. Acho que acabou o espaço, amor.');
     return;
   }
   if (motivo === 'importacao' && !importando()) garantirPersistencia();
@@ -195,7 +195,7 @@ function anotar(id, pagina, { daLista = false } = {}) {
         ui.anotacaoSalva = true;
         render();
       } else {
-        avisar('Anotação salva · original preservado');
+        avisar('Anotação guardadinha, amor');
       }
     },
   });
@@ -225,11 +225,11 @@ function sairDaImportacao() {
 async function removerDoAparelho(id) {
   try {
     await removerArquivo(id);
-    avisar('Arquivo removido. O progresso continua salvo.');
+    avisar('Tirei o arquivo. Seu progresso ficou, amor.');
     atualizarArmazenamento();
   } catch (erro) {
     console.error(erro);
-    avisar('Não deu para remover o arquivo.');
+    avisar('Não consegui tirar o arquivo.');
   }
 }
 
@@ -259,7 +259,7 @@ function abrirVolume(id, { continuacao = false, pagina = null } = {}) {
   const v = volume(id);
   if (!v) return;
   if (!v.temArquivo) {
-    avisar('Importe o CBZ ou ZIP de novo para ler este volume.');
+    avisar('Esse precisa do arquivo de novo, Lulu.');
     return;
   }
   clearTimeout(brindeTimer);
@@ -296,10 +296,10 @@ async function removerMarcados() {
   ui.confirmandoRemocao = false;
   try {
     const removidos = await removerArquivos([...estado.paraRemover]);
-    avisar(`${removidos === 1 ? '1 arquivo removido' : `${removidos} arquivos removidos`}. O progresso continua salvo.`);
+    avisar(`${removidos === 1 ? 'Tirei 1 arquivo' : `Tirei ${removidos} arquivos`}. Seu progresso ficou.`);
   } catch (erro) {
     console.error(erro);
-    avisar('Não deu para remover todos os arquivos.');
+    avisar('Não consegui tirar todos.');
   }
   ir('dados');
   atualizarArmazenamento();
@@ -316,16 +316,16 @@ function exportarBackup() {
   const nome = `estante-backup-${dataDeHoje()}.json`;
   const arquivo = new File([JSON.stringify(montarBackup(), null, 2)], nome, { type: 'application/json' });
   const pronto = () => mostrarResultadoDoBackup({
-    titulo: 'Backup pronto',
-    texto: 'Progresso e anotações exportados em JSON. Guarde o arquivo fora deste aparelho.',
+    titulo: 'Backup feito!',
+    texto: 'Guarda esse arquivinho num lugar seguro, amor.',
   });
 
   // No iPhone, a folha de compartilhar tem "Salvar em Arquivos"; no computador, um download comum
   if (safariDoIos() && navigator.canShare?.({ files: [arquivo] })) {
-    navigator.share({ files: [arquivo], title: 'Backup da Estante' })
+    navigator.share({ files: [arquivo], title: 'Backup da Estante Tsukina' })
       .then(pronto)
       .catch((erro) => {
-        if (erro?.name !== 'AbortError') avisar('Não deu para compartilhar o backup.');
+        if (erro?.name !== 'AbortError') avisar('Não consegui compartilhar o backup.');
       });
     return;
   }
@@ -349,19 +349,19 @@ seletorBackup.addEventListener('change', async () => {
     try {
       dados = JSON.parse(await arquivo.text());
     } catch {
-      throw new ErroDeBackup('O arquivo não é um JSON válido.');
+      throw new ErroDeBackup('Esse arquivo não é um backup, amor.');
     }
     const { novos } = await restaurarBackup(dados);
     mostrarResultadoDoBackup({
-      titulo: 'Backup restaurado',
-      texto: `Progresso e anotações restaurados a partir do JSON. Os arquivos de mangá continuam separados.${novos
-        ? ` ${novos === 1 ? '1 volume volta' : `${novos} volumes voltam`} quando você importar o arquivo de novo.` : ''}`,
+      titulo: 'Tudo de volta!',
+      texto: `Seu progresso e suas anotações voltaram, xuxu.${novos
+        ? ` ${novos === 1 ? '1 volume volta' : `${novos} volumes voltam`} quando você trouxer os arquivos de novo.` : ''}`,
     });
   } catch (erro) {
     if (!(erro instanceof ErroDeBackup)) console.error(erro);
     mostrarResultadoDoBackup({
-      titulo: 'Backup não restaurado',
-      texto: erro instanceof ErroDeBackup ? erro.message : 'Não deu para gravar o backup no aparelho.',
+      titulo: 'Não deu pra restaurar',
+      texto: erro instanceof ErroDeBackup ? erro.message : 'Não consegui guardar o backup.',
     });
   }
 });
@@ -512,7 +512,7 @@ const esperaLonga = setTimeout(render, 250);
 carregar()
   .catch((erro) => {
     console.error(erro);
-    avisar('Não deu para abrir o armazenamento do aparelho.');
+    avisar('Não consegui abrir sua estante agora.');
   })
   .finally(() => {
     clearTimeout(esperaLonga);

@@ -13,7 +13,7 @@ export const nomeCurto = (v) => `${v.serie} · v${doisDigitos(v.numero)}`;
 
 /** Estado de leitura como aparece embaixo da capa. */
 export function estadoDeLeitura(v) {
-  if (!v.temArquivo) return 'Arquivo removido';
+  if (!v.temArquivo) return 'Sem arquivo agora';
   if (naoLido(v)) return 'Não lido';
   if (lido(v)) return `Lido · ${v.paginas} / ${v.paginas}`;
   return `Página ${v.pagina} / ${v.paginas}`;

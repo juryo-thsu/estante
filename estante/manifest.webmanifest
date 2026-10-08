@@ -1,7 +1,7 @@
 {
-  "name": "Estante",
-  "short_name": "Estante",
-  "description": "Sua estante de mangás, no seu aparelho.",
+  "name": "Estante Tsukina",
+  "short_name": "Tsukina",
+  "description": "A estante de mangás da Lua.",
   "lang": "pt-BR",
   "id": "./",
   "start_url": "./",

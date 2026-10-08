@@ -14,17 +14,17 @@ export function renderAjustes() {
   return `<header class="cabecalho"><h1 class="titulo">Ajustes</h1></header>
   <div class="rolagem" data-rolagem="ajustes">
     <div class="conteudo">
-      <h2 class="ajustes__secao">Aparência</h2>
+      <h2 class="ajustes__secao">Do seu jeitinho</h2>
       <p class="ajustes__texto">Dois lados da mesma história.</p>
       <div class="temas" role="group" aria-label="Tema">
         ${tema('noite', 'Noite', 'Metal e bordô')}
         ${tema('morango', 'Morango', 'Creme e rosa')}
       </div>
-      <button class="botao botao--secundario" type="button" data-acao="em-breve" data-o-que="As preferências ficam em cada série: abra um volume e toque em Opções.">Preferências de leitura</button>
-      <button class="botao botao--secundario" type="button" data-acao="ir" data-destino="dados">Dados, armazenamento e backup</button>
+      <button class="botao botao--secundario" type="button" data-acao="em-breve" data-o-que="Cada série guarda seu jeitinho de ler: abre um volume e toca em Opções, xuxu.">Preferências de leitura</button>
+      <button class="botao botao--secundario" type="button" data-acao="ir" data-destino="dados">Seus dados e backup</button>
       <button class="botao botao--secundario" type="button" data-acao="anotacoes">Páginas e anotações</button>
-      <p class="ajustes__nota">Animações curtas · respeita movimento reduzido</p>
-      <p class="ajustes__versao">ESTANTE · versão ${VERSAO}</p>
+      <p class="ajustes__nota">Feita com amor pra Lua.</p>
+      <p class="ajustes__versao">ESTANTE TSUKINA · versão ${VERSAO}</p>
     </div>
   </div>`;
 }

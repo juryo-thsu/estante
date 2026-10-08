@@ -26,31 +26,27 @@ function rodape(botao) {
 function avisoDeInstalacao() {
   if (!safariDoIos() || instalado()) return '';
   return `<section class="cartao-dados">
-    <h2 class="cartao-dados__titulo">Instale antes de importar</h2>
-    <p class="cartao-dados__texto">No iPhone, o app da tela de início guarda os mangás separado do Safari. Instale primeiro para não importar duas vezes.</p>
-    <button class="botao botao--secundario botao--44" type="button" data-acao="como-instalar">Como instalar</button>
+    <h2 class="cartao-dados__titulo">Lulu, instala primeiro?</h2>
+    <p class="cartao-dados__texto">Abrindo pelo ícone da tela de início, seus mangás ficam guardadinhos no lugar certo.</p>
+    <button class="botao botao--secundario botao--44" type="button" data-acao="como-instalar">Me mostra como</button>
   </section>`;
 }
 
 function telaEscolher() {
-  return `${barraComVoltar('Adicionar mangá')}
+  return `${barraComVoltar('Trazer mangás')}
   <div class="rolagem" data-rolagem="importar">
     <div class="importar">
       ${avisoDeInstalacao()}
       <section class="importar__cartao">
         ${icone('arquivos-zip', 40)}
-        <h2 class="importar__titulo">Traga sua coleção</h2>
-        <p class="importar__texto">Escolha arquivos .cbz ou .zip pelo app Arquivos. Você pode selecionar vários de uma vez.</p>
+        <h2 class="importar__titulo">Traz seus mangás, amor</h2>
+        <p class="importar__texto">Pode escolher vários .cbz ou .zip de uma vez.</p>
       </section>
       <ul class="formatos" aria-label="Formatos aceitos">
         <li class="formato">CBZ</li>
         <li class="formato">ZIP</li>
         <li class="formato formato--largo">Vários arquivos</li>
       </ul>
-      <h2 class="importar__titulo">Organizados por série</h2>
-      <p class="importar__texto">Confirme a série e o número do volume depois da importação.</p>
-      <h2 class="importar__titulo">Leitura no seu ritmo</h2>
-      <p class="importar__texto">Depois de salvar os arquivos, você pode ler sem conexão.</p>
     </div>
   </div>
   ${rodape('<button class="botao" type="button" data-acao="escolher-arquivos">Escolher arquivos</button>')}`;
@@ -82,23 +78,23 @@ function telaResultados({ itens }) {
   let titulo;
   let linhas;
   if (andando) {
-    titulo = `Importando ${Math.min(prontos + 1, itens.length)} de ${itens.length}…`;
-    linhas = ['Mantenha o app aberto até terminar.'];
+    titulo = `Guardando ${Math.min(prontos + 1, itens.length)} de ${itens.length}…`;
+    linhas = ['Deixa o app aberto um pouquinho, xuxu.'];
   } else {
-    titulo = adicionados.length ? plural(adicionados.length, 'volume adicionado', 'volumes adicionados') : 'Nenhum volume adicionado';
-    linhas = adicionados.length ? resumo(adicionados) : ['Confira o motivo em cada arquivo.'];
+    titulo = adicionados.length ? plural(adicionados.length, 'volume novo na estante!', 'volumes novos na estante!') : 'Nenhum volume entrou';
+    linhas = adicionados.length ? resumo(adicionados) : ['Olha o que aconteceu com cada um, amor.'];
   }
 
-  return `${barraComVoltar('Importação')}
+  return `${barraComVoltar('Chegando na estante')}
   <div class="rolagem" data-rolagem="importacao">
     <div class="importar">
       <h2 class="importar__titulo" aria-live="polite">${esc(titulo)}</h2>
       <p class="importar__texto">${linhas.map(esc).join('<br>')}</p>
       ${itens.map(cartaoDeResultado).join('')}
-      <button class="botao botao--secundario botao--44" type="button" data-acao="escolher-arquivos">Escolher outros arquivos</button>
+      <button class="botao botao--secundario botao--44" type="button" data-acao="escolher-arquivos">Trazer mais</button>
     </div>
   </div>
-  ${rodape('<button class="botao" type="button" data-acao="sair-importacao">Ir para a estante</button>')}`;
+  ${rodape('<button class="botao" type="button" data-acao="sair-importacao">Ver minha estante</button>')}`;
 }
 
 function cartaoDeResultado(item) {
@@ -110,24 +106,24 @@ function cartaoDeResultado(item) {
 
   if (item.situacao === 'fila') {
     detalhe = 'Na fila';
-    rotulo = 'Aguardando';
+    rotulo = 'Esperando';
   } else if (item.situacao === 'lendo') {
-    detalhe = 'Lendo as páginas e preparando a capa…';
-    rotulo = 'Importando';
+    detalhe = 'Folheando e preparando a capa…';
+    rotulo = 'Guardando';
   } else if (item.situacao === 'salvo' && v) {
     detalhe = `${nomeLongo(v)} · ${v.paginas} páginas · capa pronta`;
-    rotulo = 'Salvo no aparelho';
+    rotulo = 'Na estante!';
     destaque = corrigivel = true;
   } else if (item.situacao === 'reanexado' && v) {
-    detalhe = `${nomeLongo(v)} · ${v.paginas} páginas · progresso mantido`;
-    rotulo = 'De volta ao aparelho';
+    detalhe = `${nomeLongo(v)} · ${v.paginas} páginas · de onde você parou`;
+    rotulo = 'Voltou pra estante';
     destaque = corrigivel = true;
   } else if (item.situacao === 'repetido' && v) {
     detalhe = `${nomeLongo(v)} já está na estante.`;
     rotulo = 'Já na estante';
   } else {
-    detalhe = item.mensagem || 'Não deu para importar este arquivo.';
-    rotulo = item.rotulo || 'Arquivo inválido';
+    detalhe = item.mensagem || 'Esse não entrou, desculpa.';
+    rotulo = item.rotulo || 'Não deu';
   }
 
   const corpo = item.corrigindo && v ? formularioDeCorrecao(item, v) : `<p class="resultado__detalhe">${esc(detalhe)}</p>

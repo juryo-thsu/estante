@@ -18,21 +18,21 @@ export function renderGerenciar({ confirmando = false } = {}) {
 
   let rodape;
   if (marcados.length === 0) {
-    rodape = '<button class="botao" type="button" disabled>Selecione volumes para remover</button>';
+    rodape = '<button class="botao" type="button" disabled>Escolhe o que tirar</button>';
   } else if (confirmando) {
-    rodape = `<button class="botao" type="button" data-acao="remover-marcados">Toque de novo para remover · ${tamanhoLegivel(total)}</button>`;
+    rodape = `<button class="botao" type="button" data-acao="remover-marcados">Tem certeza, amor? Toque de novo · ${tamanhoLegivel(total)}</button>`;
   } else {
     rodape = `<button class="botao" type="button" data-acao="remover-marcados">Remover ${plural(marcados.length, 'volume', 'volumes')} · ${tamanhoLegivel(total)}</button>`;
   }
 
   return `<header class="barra-voltar">
     <button class="voltar" type="button" data-acao="ir" data-destino="dados" aria-label="Voltar para Dados e app">${icone('voltar', 20)}</button>
-    <h1 class="barra-voltar__titulo">Gerenciar volumes</h1>
+    <h1 class="barra-voltar__titulo">Liberar espaço</h1>
   </header>
   <div class="rolagem" data-rolagem="gerenciar">
     <div class="importar">
-      <h2 class="importar__titulo">Libere espaço para ler</h2>
-      <p class="importar__texto">O progresso e as anotações continuam salvos ao remover os arquivos deste aparelho.</p>
+      <h2 class="importar__titulo">Abrir espacinho, Lua</h2>
+      <p class="importar__texto">Seu progresso e suas anotações ficam, só os arquivos saem.</p>
       ${lista.length ? lista.map((v) => {
         const marcado = estado.paraRemover.has(v.id);
         return `<button class="cartao-dados selecao" type="button" data-acao="marcar-para-remover" data-id="${esc(v.id)}" aria-pressed="${marcado}">
@@ -42,9 +42,7 @@ export function renderGerenciar({ confirmando = false } = {}) {
           </span>
           <span class="selecao__detalhe">${esc(`${tamanhoLegivel(v.tamanho)} · ${situacao(v)}`)}</span>
         </button>`;
-      }).join('') : '<p class="importar__texto">Nenhum volume com arquivo neste aparelho.</p>'}
-      <h2 class="importar__titulo">Apenas os arquivos são removidos</h2>
-      <p class="importar__texto">Para ler esses volumes novamente, importe os CBZ ou ZIP originais.</p>
+      }).join('') : '<p class="importar__texto">Não tem nenhum arquivo pra tirar.</p>'}
     </div>
   </div>
   <div class="rodape-acao">${rodape}</div>`;

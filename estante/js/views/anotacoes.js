@@ -88,11 +88,11 @@ export function renderAnotacoes({ busca = '', salva = false } = {}) {
   if (total === 0) {
     lista = mensagemVazia({
       nomeIcone: 'pin',
-      titulo: 'Nenhuma página anotada',
-      linhas: ['Toque em Anotar no leitor', 'ou marque uma página para guardá-la aqui.'],
+      titulo: 'Nenhuma anotação ainda',
+      linhas: ['Quando quiser lembrar de uma página,', 'ela aparece aqui, Lulu.'],
     });
   } else if (grupos.length === 0) {
-    lista = `<p class="colecao__vazio">Nada nas anotações com “${esc(busca.trim())}”.</p>`;
+    lista = `<p class="colecao__vazio">Não achei “${esc(busca.trim())}”, amor.</p>`;
   } else {
     lista = grupos.join('');
   }
@@ -109,21 +109,21 @@ export function renderAnotacoes({ busca = '', salva = false } = {}) {
       </div>
       <label class="busca busca--anotacoes">
         ${icone('search', 20)}
-        <span class="so-leitor">Buscar nas suas anotações</span>
+        <span class="so-leitor">Procurar nas suas anotações</span>
         <span class="busca__campo-area">
           <input class="busca__campo" id="busca-anotacoes" type="search" inputmode="search" enterkeyhint="search"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-            placeholder="Buscar nas suas anotações" value="${esc(busca)}">
+            placeholder="Procurar nas suas anotações" value="${esc(busca)}">
         </span>
       </label>
-      ${salva ? `<p class="anotacoes__salva" role="status">${icone('check', 20)}Anotação salva · original preservado</p>` : ''}
+      ${salva ? `<p class="anotacoes__salva" role="status">${icone('check', 20)}Anotação guardadinha, amor</p>` : ''}
       ${lista}
     </div>
   </div>
   <div class="rodape-acao rodape-acao--com-linha">
     ${atual
-      ? `<button class="botao" type="button" data-acao="editar-anotacao" data-id="${esc(atual.v.id)}" data-pagina="${atual.pagina}">Anotar página atual</button>`
-      : '<button class="botao" type="button" disabled>Leia um volume para anotar</button>'}
+      ? `<button class="botao" type="button" data-acao="editar-anotacao" data-id="${esc(atual.v.id)}" data-pagina="${atual.pagina}">Anotar onde parei</button>`
+      : '<button class="botao" type="button" disabled>Lê um pouquinho primeiro, xuxu</button>'}
   </div>`;
 }
 

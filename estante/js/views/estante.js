@@ -27,7 +27,7 @@ export function renderEstante({ ocultoAgora } = {}) {
             <h1 class="titulo">Estante</h1>
             <span class="simbolo">${icone('planet')}</span>
           </div>
-          <p class="topo__total">${plural(todos.length, 'volume', 'volumes')} · no seu aparelho</p>
+          <p class="topo__total">${plural(todos.length, 'volume guardadinho', 'volumes guardadinhos')} pra você</p>
         </div>
         <button class="adicionar" type="button" data-acao="adicionar">Adicionar</button>
       </header>
@@ -37,17 +37,17 @@ export function renderEstante({ ocultoAgora } = {}) {
       <div class="busca-linha">
         <label class="busca">
           ${icone('search', 20)}
-          <span class="so-leitor">Buscar na sua estante</span>
+          <span class="so-leitor">Procura aqui, xuxu</span>
           <span class="busca__campo-area">
             <input class="busca__campo" id="busca" type="search" inputmode="search" enterkeyhint="search"
               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-              placeholder="Buscar na sua estante" value="${esc(estado.busca)}">
+              placeholder="Procura aqui, xuxu" value="${esc(estado.busca)}">
           </span>
         </label>
         <button class="atalho atalho--anotacoes" type="button" data-acao="anotacoes">Anotações</button>
       </div>
 
-      <section class="colecao" id="colecao" aria-label="Minha coleção">${renderColecao()}</section>
+      <section class="colecao" id="colecao" aria-label="Sua coleção">${renderColecao()}</section>
 
       ${secaoUltimosLidos()}
     </div>
@@ -61,14 +61,14 @@ export function renderColecao() {
   const series = [...new Set(todos.map((v) => v.serie))];
   const titulo = series.length === 1
     ? `${series[0]} · ${plural(todos.length, 'volume', 'volumes')}`
-    : `Minha coleção · ${plural(todos.length, 'volume', 'volumes')}`;
+    : `Sua coleção · ${plural(todos.length, 'volume', 'volumes')}`;
 
   const filtro = (id, rotulo, n) => `<button class="filtro" type="button" data-acao="filtro" data-filtro="${id}" aria-pressed="${estado.filtro === id}">${rotulo} · ${n}</button>`;
 
   let grade;
   if (lista.length === 0) {
     const termo = estado.busca.trim();
-    grade = `<p class="colecao__vazio">${termo ? `Nada na estante com “${esc(termo)}”.` : 'Nenhum volume neste filtro.'}</p>`;
+    grade = `<p class="colecao__vazio">${termo ? `Não achei “${esc(termo)}”, amor.` : 'Nadinha aqui, Lua.'}</p>`;
   } else if (series.length > 1 && estado.ordem !== 'recentes') {
     const grupos = [...new Set(lista.map((v) => v.serie))];
     grade = grupos.map((serie) => {
@@ -94,7 +94,7 @@ export function renderColecao() {
       ${filtro('nao-lidos', 'Não lidos', todos.filter(naoLido).length)}
     </div>
     ${grade}
-    ${escondidos ? `<button class="colecao__ocultos" type="button" data-acao="mostrar-ocultos">${plural(escondidos, 'volume oculto', 'volumes ocultos')} · Mostrar</button>` : ''}`;
+    ${escondidos ? `<button class="colecao__ocultos" type="button" data-acao="mostrar-ocultos">${plural(escondidos, 'volume escondidinho', 'volumes escondidinhos')} · Mostrar</button>` : ''}`;
 }
 
 function cartaoRetomar() {
@@ -105,11 +105,11 @@ function cartaoRetomar() {
     <span class="retomar__xadrez" aria-hidden="true"></span>
     ${capa(v, 'retomar')}
     <div class="retomar__texto">
-      <p class="retomar__chamada">CONTINUAR LENDO</p>
+      <p class="retomar__chamada">DE ONDE VOCÊ PAROU, LULU</p>
       <h2 class="retomar__volume">${esc(nomeLongo(v))}</h2>
       <p class="retomar__pagina">Página ${v.pagina} de ${v.paginas} · ${pct}% lido</p>
       ${perolas(v.pagina / v.paginas, 'Progresso salvo')}
-      <button class="botao" type="button" data-acao="abrir" data-id="${esc(v.id)}">Retomar leitura</button>
+      <button class="botao" type="button" data-acao="abrir" data-id="${esc(v.id)}">Continuar lendo, amor</button>
     </div>
   </section>`;
 }
@@ -140,8 +140,8 @@ export function renderCarregando() {
   return `<header class="cabecalho"><h1 class="titulo">Estante</h1></header>
   <div class="carregando" role="status">
     <div class="carregando__simbolo">${icone('anel-girando', 48)}</div>
-    <h2 class="carregando__titulo">Preparando sua estante</h2>
-    <p class="carregando__texto">Salvando capas e organizando volumes…</p>
+    <h2 class="carregando__titulo">Arrumando sua estante, Lulu</h2>
+    <p class="carregando__texto">Só um instantinho…</p>
     <div class="carregando__capas" aria-hidden="true"><span></span><span></span></div>
   </div>`;
 }
@@ -153,11 +153,11 @@ function telaPrimeiroAcesso() {
       <div class="tartan" aria-hidden="true"></div>
       ${mensagemVazia({
         nomeIcone: 'planet',
-        titulo: 'Uma estante só sua',
-        linhas: ['Sua próxima história começa aqui.', 'Adicione um CBZ ou ZIP pelo app Arquivos.'],
+        titulo: 'Uma estante só sua, Lua',
+        linhas: ['Tá vazia por enquanto, amorzinho.', 'Vamos trazer seus mangás?'],
         convite: true,
       })}
-      <button class="botao" type="button" data-acao="adicionar">Adicionar primeiro mangá</button>
+      <button class="botao" type="button" data-acao="adicionar">Trazer meu primeiro mangá</button>
     </div>
   </div>`;
 }
@@ -168,10 +168,10 @@ function telaVolumeOculto(v) {
     <div class="conteudo">
       ${mensagemVazia({
         nomeIcone: 'lock',
-        titulo: 'Volume oculto',
-        linhas: ['Ele fica fora da grade até você', 'escolher mostrá-lo novamente.'],
+        titulo: 'Volume escondido',
+        linhas: ['Tá guardadinho longe da estante,', 'só você sabe onde, xuxu.'],
       })}
-      <button class="botao" type="button" data-acao="mostrar-volume" data-id="${esc(v.id)}">Mostrar volume</button>
+      <button class="botao" type="button" data-acao="mostrar-volume" data-id="${esc(v.id)}">Mostrar de novo</button>
     </div>
   </div>`;
 }
