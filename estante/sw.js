@@ -5,7 +5,7 @@
 // está inteiro. Assim o app nunca mistura arquivos de duas versões.
 // TODA mudança em estante/ que vai para a main precisa subir VERSAO (e um arquivo novo entra em ARQUIVOS).
 
-const VERSAO = '4b-4';
+const VERSAO = '4b-5';
 const CACHE = `estante-${VERSAO}`;
 
 const ARQUIVOS = [

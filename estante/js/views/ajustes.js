@@ -2,7 +2,7 @@
 
 import { estado } from '../store.js';
 
-export const VERSAO = '0.7.07';
+export const VERSAO = '0.7.08';
 
 export function renderAjustes() {
   const tema = (id, nome, descricao) => `<button class="tema" type="button" data-acao="tema" data-tema="${id}" aria-pressed="${estado.tema === id}">

@@ -498,6 +498,8 @@
   position: absolute;
   inset: var(--sat) var(--gutter) var(--sab);
   display: grid;
+  /* A trilha automática cresce com a imagem e faz max-height: 100% perder o limite da tela. */
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   place-items: center;
 }
 .leitor__imagem {
