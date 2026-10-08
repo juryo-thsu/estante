@@ -5,7 +5,7 @@
 // está inteiro. Assim o app nunca mistura arquivos de duas versões.
 // TODA mudança em estante/ que vai para a main precisa subir VERSAO (e um arquivo novo entra em ARQUIVOS).
 
-const VERSAO = '4b-3';
+const VERSAO = '4b-4';
 const CACHE = `estante-${VERSAO}`;
 
 const ARQUIVOS = [
@@ -55,8 +55,6 @@ const ARQUIVOS = [
   'assets/icons/borracha.svg',
   'assets/icons/check.svg',
   'assets/icons/circulo.svg',
-  'assets/icons/copo-direito.svg',
-  'assets/icons/copo-esquerdo.svg',
   'assets/icons/desfazer.svg',
   'assets/icons/heart.svg',
   'assets/icons/heart-active.svg',

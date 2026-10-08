@@ -1293,40 +1293,24 @@
   gap: var(--space-20);
   padding: 80px var(--gutter) 32px;
 }
-.brinde__copos {
-  position: relative;
-  align-self: stretch;
-  height: 88px;
+/* O verso aparece devagar, no tempo que antes era do brinde */
+.brinde__verso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0;
+  text-align: center;
+  animation: aparecer 1s var(--ease) both;
 }
-.brinde__copo {
-  position: absolute;
-  width: 36px;
-  height: 66px;
+.brinde__verso blockquote {
+  margin: 0;
+  color: var(--color-accent);
+  font: 700 22px/1.35 var(--font-volume);
 }
-/* Os copos se aproximam, encostam e voltam um pouco: o brinde dura 1 s */
-.brinde__copo--esquerdo {
-  top: 4px;
-  left: calc(50% - 36px);
-  transform: rotate(-8deg);
-  animation: brinde-esquerdo 1s var(--ease) both;
-}
-.brinde__copo--direito {
-  top: 9px;
-  left: 50%;
-  transform: rotate(8deg);
-  animation: brinde-direito 1s var(--ease) both;
-}
-@keyframes brinde-esquerdo {
-  0% { transform: translateX(-44px) rotate(-8deg); }
-  60% { transform: translateX(2px) rotate(-8deg); }
-  75% { transform: translateX(-4px) rotate(-8deg); }
-  100% { transform: rotate(-8deg); }
-}
-@keyframes brinde-direito {
-  0% { transform: translateX(44px) rotate(8deg); }
-  60% { transform: translateX(-2px) rotate(8deg); }
-  75% { transform: translateX(4px) rotate(8deg); }
-  100% { transform: rotate(8deg); }
+.brinde__verso figcaption {
+  color: var(--color-muted);
+  font: var(--t-small);
 }
 .brinde__titulo {
   font: var(--t-section);
@@ -1355,10 +1339,9 @@
   .carregando__simbolo .icone {
     animation: respiro 1.2s linear infinite;
   }
-  /* Brinde: os copos aparecem no lugar */
-  .brinde__copo--esquerdo,
-  .brinde__copo--direito {
-    animation: aparecer var(--motion-in) linear both;
+  /* Verso do fim do volume: fade curto */
+  .brinde__verso {
+    animation-duration: var(--motion-in);
   }
   /* Controles do leitor: só fade, sem deslocamento */
   .leitor__ui,
