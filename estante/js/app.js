@@ -3,7 +3,7 @@
 import {
   estado, assinar, carregar, volume, definirTema, definirFiltro, definirBusca, proximaOrdem, definirOculto, mostrarOcultos,
   removerArquivo, importar, importando, encerrarImportacao, abrirCorrecao, corrigirResultado,
-  prepararGerenciar, alternarParaRemover, removerArquivos, montarBackup, restaurarBackup, ErroDeBackup, definirAvisoDeDados,
+  prepararGerenciar, alternarParaRemover, removerArquivos,
 } from './store.js';
 import { renderEstante, renderColecao, renderCarregando } from './views/estante.js';
 import { renderFavoritos } from './views/favoritos.js';
@@ -17,15 +17,15 @@ import { abrirEditor } from './views/editor.js';
 import { abrirFolha, folhaAberta } from './views/folha.js';
 import { abrirLeitor } from './views/leitor.js';
 import { renderBrinde } from './views/brinde.js';
-import { iniciarOffline, safariDoIos } from './offline.js';
-import { atualizarArmazenamento, pedirPersistencia, garantirPersistencia } from './armazenamento.js';
+import { iniciarOffline } from './offline.js';
+import { atualizarArmazenamento, garantirPersistencia } from './armazenamento.js';
+import { animarEntrada, capturarVolumes, animarColecao } from './motion.js';
 
 const app = document.getElementById('app');
 const tela = document.getElementById('tela');
 const nav = document.getElementById('nav');
 const aviso = document.getElementById('aviso');
 const seletor = document.getElementById('seletor');
-const seletorBackup = document.getElementById('seletor-backup');
 
 const DESTINOS = ['biblioteca', 'favoritos', 'ajustes', 'importar', 'dados', 'instalar', 'gerenciar', 'anotacoes'];
 // Telas cheias, com voltar e ação embaixo no lugar da navegação inferior (como no Figma)
@@ -79,7 +79,10 @@ function guardarCampos() {
   };
 }
 
+let ultimoDestino = null;
 function render({ manterRolagem = true } = {}) {
+  const destinoAnterior = ultimoDestino;
+  const mudouDeTela = estado.carregado && destinoAnterior !== ui.destino;
   const rolagem = tela.querySelector('[data-rolagem]');
   const chave = rolagem?.dataset.rolagem;
   const topo = rolagem?.scrollTop ?? 0;
@@ -129,13 +132,16 @@ function render({ manterRolagem = true } = {}) {
     if (botao.dataset.destino === ui.destino) botao.setAttribute('aria-current', 'page');
     else botao.removeAttribute('aria-current');
   }
+  nav.style.setProperty('--aba', Math.max(0, ['biblioteca', 'favoritos', 'ajustes'].indexOf(ui.destino)));
+  if (mudouDeTela) {
+    ultimoDestino = ui.destino;
+    animarEntrada(tela, DESTINOS.indexOf(ui.destino) >= DESTINOS.indexOf(destinoAnterior) ? 1 : -1);
+  }
 }
 
 function ir(destino) {
   if (!DESTINOS.includes(destino)) return;
   const mudou = destino !== ui.destino;
-  // O resultado do backup vale só enquanto a pessoa está em Dados e app
-  if (ui.destino === 'dados' && destino !== 'dados' && destino !== 'gerenciar') estado.avisoDeDados = null;
   if (ui.destino === 'anotacoes' && destino !== 'anotacoes') {
     ui.anotacaoSalva = false;
     ui.buscaAnotacoes = '';
@@ -158,15 +164,32 @@ function ir(destino) {
 
 assinar((motivo) => {
   if (motivo === 'erro-gravacao') {
-    avisar('Não consegui salvar. Acho que acabou o espaço, amor.');
+    avisar('Não consegui salvar. Acho que acabou o espaço.');
     return;
   }
   if (motivo === 'importacao' && !importando()) garantirPersistencia();
   // Virar página não redesenha a estante (escondida atrás do leitor); ela é redesenhada ao fechar
   if (motivo === 'progresso' || motivo === 'preferencias') return;
+  // Atualizações de bastidor não interrompem uma entrada nem tiram o foco dos controles.
+  if ((motivo === 'offline' || motivo === 'armazenamento') && ui.destino !== 'dados') return;
   if (motivo === 'busca') {
     const colecao = document.getElementById('colecao');
-    if (colecao) colecao.innerHTML = renderColecao();
+    if (colecao) {
+      const anteriores = capturarVolumes(tela);
+      colecao.innerHTML = renderColecao();
+      animarColecao(tela, anteriores);
+    }
+    return;
+  }
+  if (motivo === 'colecao') {
+    const anteriores = capturarVolumes(tela);
+    const ativo = document.activeElement;
+    const acao = ativo?.dataset.acao;
+    const filtro = ativo?.dataset.filtro;
+    render();
+    const seletor = acao === 'filtro' ? `[data-filtro="${CSS.escape(filtro)}"]` : '[data-acao="ordenar"]';
+    tela.querySelector(seletor)?.focus({ preventScroll: true });
+    animarColecao(tela, anteriores);
     return;
   }
   aplicarTema();
@@ -195,7 +218,7 @@ function anotar(id, pagina, { daLista = false } = {}) {
         ui.anotacaoSalva = true;
         render();
       } else {
-        avisar('Anotação guardadinha, amor');
+        avisar('Anotação guardada');
       }
     },
   });
@@ -225,7 +248,7 @@ function sairDaImportacao() {
 async function removerDoAparelho(id) {
   try {
     await removerArquivo(id);
-    avisar('Tirei o arquivo. Seu progresso ficou, amor.');
+    avisar('Tirei o arquivo. Seu progresso ficou.');
     atualizarArmazenamento();
   } catch (erro) {
     console.error(erro);
@@ -259,7 +282,7 @@ function abrirVolume(id, { continuacao = false, pagina = null } = {}) {
   const v = volume(id);
   if (!v) return;
   if (!v.temArquivo) {
-    avisar('Esse precisa do arquivo de novo, Lulu.');
+    avisar('Esse precisa do arquivo de novo.');
     return;
   }
   clearTimeout(brindeTimer);
@@ -279,7 +302,7 @@ function abrirVolume(id, { continuacao = false, pagina = null } = {}) {
   });
 }
 
-// ---------- Gerenciar volumes e backup ----------
+// ---------- Gerenciar volumes ----------
 
 function abrirGerenciar() {
   prepararGerenciar();
@@ -304,67 +327,6 @@ async function removerMarcados() {
   ir('dados');
   atualizarArmazenamento();
 }
-
-const dataDeHoje = () => new Date().toLocaleDateString('sv-SE'); // 2026-10-07
-
-function mostrarResultadoDoBackup(aviso) {
-  definirAvisoDeDados(aviso);
-  tela.querySelector('[data-rolagem]')?.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function exportarBackup() {
-  const nome = `estante-backup-${dataDeHoje()}.json`;
-  const arquivo = new File([JSON.stringify(montarBackup(), null, 2)], nome, { type: 'application/json' });
-  const pronto = () => mostrarResultadoDoBackup({
-    titulo: 'Backup feito!',
-    texto: 'Guarda esse arquivinho num lugar seguro, amor.',
-  });
-
-  // No iPhone, a folha de compartilhar tem "Salvar em Arquivos"; no computador, um download comum
-  if (safariDoIos() && navigator.canShare?.({ files: [arquivo] })) {
-    navigator.share({ files: [arquivo], title: 'Backup da Estante Tsukina' })
-      .then(pronto)
-      .catch((erro) => {
-        if (erro?.name !== 'AbortError') avisar('Não consegui compartilhar o backup.');
-      });
-    return;
-  }
-  const url = URL.createObjectURL(arquivo);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = nome;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
-  pronto();
-}
-
-seletorBackup.addEventListener('change', async () => {
-  const [arquivo] = seletorBackup.files;
-  seletorBackup.value = '';
-  if (!arquivo) return;
-  try {
-    let dados;
-    try {
-      dados = JSON.parse(await arquivo.text());
-    } catch {
-      throw new ErroDeBackup('Esse arquivo não é um backup, amor.');
-    }
-    const { novos } = await restaurarBackup(dados);
-    mostrarResultadoDoBackup({
-      titulo: 'Tudo de volta!',
-      texto: `Seu progresso e suas anotações voltaram, xuxu.${novos
-        ? ` ${novos === 1 ? '1 volume volta' : `${novos} volumes voltam`} quando você trouxer os arquivos de novo.` : ''}`,
-    });
-  } catch (erro) {
-    if (!(erro instanceof ErroDeBackup)) console.error(erro);
-    mostrarResultadoDoBackup({
-      titulo: 'Não deu pra restaurar',
-      texto: erro instanceof ErroDeBackup ? erro.message : 'Não consegui guardar o backup.',
-    });
-  }
-});
 
 // ---------- Folha de ações ----------
 
@@ -435,6 +397,8 @@ tela.addEventListener('click', (evento) => {
   const alvo = evento.target.closest('[data-acao]');
   if (!alvo || folhaAberta()) return;
   const { acao, id } = alvo.dataset;
+  // O Safari não foca botões ao tocar: registre o controle antes de recriar a coleção.
+  if (acao === 'filtro' || acao === 'ordenar') alvo.focus({ preventScroll: true });
 
   if (acao === 'acoes') abrirAcoes(id);
   else if (acao === 'abrir') abrirVolume(id);
@@ -449,26 +413,26 @@ tela.addEventListener('click', (evento) => {
     ui.voltarDaInstalacao = ui.destino;
     ir('instalar');
   } else if (acao === 'fechar-instalacao') ir(ui.voltarDaInstalacao);
-  else if (acao === 'pedir-persistencia') pedirPersistencia();
   else if (acao === 'gerenciar') abrirGerenciar();
   else if (acao === 'marcar-para-remover') {
     ui.confirmandoRemocao = false;
     alternarParaRemover(id);
   } else if (acao === 'remover-marcados') removerMarcados();
-  else if (acao === 'exportar-backup') exportarBackup();
   else if (acao === 'anotacoes') ir('anotacoes');
   else if (acao === 'editar-anotacao') anotar(id, Number(alvo.dataset.pagina), { daLista: ui.destino === 'anotacoes' });
   else if (acao === 'ler-pagina') abrirVolume(id, { pagina: Number(alvo.dataset.pagina) });
-  else if (acao === 'importar-backup') seletorBackup.click();
   else if (acao === 'filtro') definirFiltro(alvo.dataset.filtro);
   else if (acao === 'ordenar') proximaOrdem();
-  else if (acao === 'tema') definirTema(alvo.dataset.tema);
+  else if (acao === 'tema') {
+    definirTema(alvo.dataset.tema);
+    tela.querySelector(`[data-acao="tema"][data-tema="${estado.tema}"]`)?.focus({ preventScroll: true });
+  }
   else if (acao === 'ir') ir(alvo.dataset.destino);
   else if (acao === 'mostrar-ocultos') mostrarOcultos();
   else if (acao === 'mostrar-volume') {
     ui.ocultoAgora = null;
     definirOculto(id, false);
-  } else if (acao === 'em-breve') avisar(alvo.dataset.oQue);
+  }
 });
 
 tela.addEventListener('submit', (evento) => {
@@ -516,7 +480,7 @@ carregar()
   })
   .finally(() => {
     clearTimeout(esperaLonga);
-    render();
+    if (ultimoDestino === null) render();
     atualizarArmazenamento();
   });
 

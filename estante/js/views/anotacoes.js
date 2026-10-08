@@ -89,10 +89,10 @@ export function renderAnotacoes({ busca = '', salva = false } = {}) {
     lista = mensagemVazia({
       nomeIcone: 'pin',
       titulo: 'Nenhuma anotação ainda',
-      linhas: ['Quando quiser lembrar de uma página,', 'ela aparece aqui, Lulu.'],
+      linhas: ['Quando quiser lembrar de uma página,', 'ela aparece aqui.'],
     });
   } else if (grupos.length === 0) {
-    lista = `<p class="colecao__vazio">Não achei “${esc(busca.trim())}”, amor.</p>`;
+    lista = `<p class="colecao__vazio">Não achei “${esc(busca.trim())}”.</p>`;
   } else {
     lista = grupos.join('');
   }
@@ -116,14 +116,14 @@ export function renderAnotacoes({ busca = '', salva = false } = {}) {
             placeholder="Procurar nas suas anotações" value="${esc(busca)}">
         </span>
       </label>
-      ${salva ? `<p class="anotacoes__salva" role="status">${icone('check', 20)}Anotação guardadinha, amor</p>` : ''}
+      ${salva ? `<p class="anotacoes__salva" role="status">${icone('check', 20)}Anotação guardada</p>` : ''}
       ${lista}
     </div>
   </div>
   <div class="rodape-acao rodape-acao--com-linha">
     ${atual
       ? `<button class="botao" type="button" data-acao="editar-anotacao" data-id="${esc(atual.v.id)}" data-pagina="${atual.pagina}">Anotar onde parei</button>`
-      : '<button class="botao" type="button" disabled>Lê um pouquinho primeiro, xuxu</button>'}
+      : '<button class="botao" type="button" disabled>Lê um pouco primeiro</button>'}
   </div>`;
 }
 

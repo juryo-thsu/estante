@@ -1,5 +1,5 @@
 /* Estante · tokens
-   Espelha a coleção "Estante / Temas" do Figma (modos Noite e Morango).
+   Temas Noite e Morango, com direção editorial inspirada em Nana e Paradise Kiss.
    Os componentes usam só as variáveis color-*, nunca as primitivas. */
 
 :root {
@@ -7,19 +7,26 @@
   --color-background: #0c0b0c;
   --color-surface: #171415;
   --color-elevated: #231b1f;
-  --color-border: #4d4030;
-  --color-accent: #b69c66;
+  --color-border: #49393c;
+  --color-accent: #d4b989;
   --color-pressed: #c093a2;
   --color-text: #f3ebdd;
   --color-muted: #aa9e98;
   --color-onAccent: #f3ebdd;
   --color-silver: #b69c66;
-  --color-action: #7e263e;
+  --color-action: #92344f;
   --color-actionPressed: #5c1b2e;
   --color-rose: #c093a2;
   --color-pearl: #e5d9c7;
   /* Fundo do leitor em "Preto puro" (igual nos dois temas) */
   --color-pureBlack: #000000;
+  --color-shadow: #00000040;
+  --color-glow: #b2557020;
+  --color-paper: #f1e7d6;
+  --color-ink: #30232b;
+  --color-editorial: #78344c;
+  --color-check: #e6b2be;
+  --color-hairline: #49393c80;
 
   --space-4: 4px;
   --space-8: 8px;
@@ -58,7 +65,7 @@
   --color-background: #f5f0e6;
   --color-surface: #fff9ef;
   --color-elevated: #e8dfd2;
-  --color-border: #c1ad83;
+  --color-border: #c6b4a8;
   --color-accent: #705729;
   --color-pressed: #9c556f;
   --color-text: #292125;
@@ -69,6 +76,9 @@
   --color-actionPressed: #672b40;
   --color-rose: #9c556f;
   --color-pearl: #7c6254;
+  --color-shadow: #48312518;
+  --color-glow: #bc758512;
+  --color-hairline: #c6b4a880;
 
   color-scheme: light;
 }

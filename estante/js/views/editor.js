@@ -73,7 +73,7 @@ export async function abrirEditor(id, pagina, { raiz, avisar, aoSalvar = () => {
   const v = volume(id);
   if (!v || aberto) return;
   if (!v.temArquivo) {
-    avisar('Esse precisa do arquivo de novo pra anotar, amor.');
+    avisar('Esse precisa do arquivo de novo pra anotar.');
     return;
   }
   aberto = { id };
@@ -84,7 +84,7 @@ export async function abrirEditor(id, pagina, { raiz, avisar, aoSalvar = () => {
   } catch (erro) {
     console.error(erro);
     aberto = null;
-    avisar('Essa página não quis abrir, amor.');
+    avisar('Essa página não quis abrir.');
     return;
   }
 

@@ -1,4 +1,4 @@
-// Tela "Dados e app": espaço, persistência, instalação, disponibilidade offline e backup.
+// Tela "Seus dados": espaço, instalação e disponibilidade offline.
 
 import { estado, paginasAnotadas } from '../store.js';
 import { esc, icone, plural, tamanhoLegivel } from '../ui.js';
@@ -6,8 +6,8 @@ import { instalado } from '../offline.js';
 
 const OFFLINE = {
   verificando: ['Conferindo…', 'Um instantinho.'],
-  preparando: ['Preparando pra funcionar sem internet…', 'Deixa a internet ligadinha até terminar, amor.'],
-  pronto: ['Funciona sem internet', 'Pode ler até no modo avião, Lua.'],
+  preparando: ['Preparando pra funcionar sem internet…', 'Deixa a internet ligada até terminar.'],
+  pronto: ['Funciona sem internet', 'Dá pra ler até no modo avião.'],
   indisponivel: ['Sem internet não vai dar', 'Esse navegador não guarda o app, mas seus mangás continuam aqui.'],
   desligado: ['Uso offline desligado no computador', 'No Live Server o app não fica guardado, para cada recarga mostrar a versão editada. Abra com ?offline para testar.'],
 };
@@ -15,7 +15,7 @@ const OFFLINE = {
 function cartao(titulo, texto, extra = '') {
   return `<section class="cartao-dados">
     <h2 class="cartao-dados__titulo">${esc(titulo)}</h2>
-    <p class="cartao-dados__texto">${esc(texto)}</p>
+    ${texto ? `<p class="cartao-dados__texto">${esc(texto)}</p>` : ''}
     ${extra}
   </section>`;
 }
@@ -43,23 +43,6 @@ function cartaoEspaco() {
   return cartao(`${tamanhoLegivel(usado)} usados`, partes.join(' · '), barra + gerenciar);
 }
 
-function cartaoPersistencia() {
-  const { persistente, recusada } = estado.armazenamento;
-  if (!navigator.storage?.persist) {
-    return cartao('Proteção indisponível', 'Esse navegador não deixa, amor.');
-  }
-  if (persistente) {
-    return cartao('Tudo protegido, amor', 'Nada vai sumir sozinho. Faz um backup de vez em quando, tá?',
-      botao('Protegido', '', true));
-  }
-  if (recusada) {
-    return cartao('Ainda não deu pra proteger', 'Abre pelo ícone da tela de início e tenta de novo, xuxu.',
-      botao('Tentar de novo', 'pedir-persistencia'));
-  }
-  return cartao('Proteger seus mangás', 'Pra nada sumir sem você querer.',
-    botao('Proteger', 'pedir-persistencia'));
-}
-
 export function renderDados() {
   const [tituloOffline, textoOffline] = OFFLINE[estado.offline] || OFFLINE.verificando;
 
@@ -69,16 +52,9 @@ export function renderDados() {
   </header>
   <div class="rolagem" data-rolagem="dados">
     <div class="importar">
-      ${estado.avisoDeDados ? `<div role="status">${cartao(estado.avisoDeDados.titulo, estado.avisoDeDados.texto)}</div>` : ''}
-      <h2 class="importar__titulo">Tudo guardadinho aqui, Lua</h2>
       ${cartaoEspaco()}
-      <div aria-live="polite">${cartaoPersistencia()}</div>
-      ${instalado() ? '' : cartao('Ícone na tela de início', 'Fica mais bonito sem as barras do Safari, Lulu.', botao('Me mostra como', 'como-instalar'))}
+      ${instalado() ? '' : cartao('Ícone na tela de início', '', botao('Me mostra como', 'como-instalar'))}
       <div aria-live="polite">${cartao(tituloOffline, textoOffline)}</div>
-      ${cartao('Backup', 'Seu progresso e suas anotações num arquivinho.', `<div class="par-de-botoes">
-        ${botao('Fazer backup', 'exportar-backup')}
-        ${botao('Restaurar', 'importar-backup')}
-      </div>`)}
     </div>
   </div>
   <div class="rodape-acao"><button class="botao" type="button" data-acao="ir" data-destino="biblioteca">Voltar pra estante</button></div>`;

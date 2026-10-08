@@ -14,7 +14,7 @@ export function renderFavoritos({ recemFavoritados = new Set() } = {}) {
         ${mensagemVazia({
           nomeIcone: 'heart',
           titulo: 'Nenhum favorito ainda',
-          linhas: ['Quando um volume roubar seu coração,', 'ele aparece aqui, amorzinho.'],
+          linhas: ['Quando um volume roubar seu coração,', 'ele aparece aqui.'],
         })}
         <button class="botao" type="button" data-acao="ir" data-destino="biblioteca">Ver a estante</button>
       </div>
@@ -24,7 +24,7 @@ export function renderFavoritos({ recemFavoritados = new Set() } = {}) {
   return `${cabecalho}
   <div class="rolagem" data-rolagem="favoritos">
     <div class="conteudo">
-      <p class="introducao">Os seus queridinhos, Lua.</p>
+      <p class="introducao">Os seus queridinhos.</p>
       <div class="grade">
         ${lista.map((v) => cartaoDeVolume(v, { favorito: true, pulsar: recemFavoritados.has(v.id) })).join('')}
       </div>

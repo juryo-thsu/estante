@@ -86,7 +86,7 @@ export function abrirFolha(id, { raiz, aoAgir = () => {} } = {}) {
     if (acao === 'remover' && !alvo.hasAttribute('data-confirmar')) {
       alvo.setAttribute('data-confirmar', '');
       alvo.classList.add('acao--confirmar');
-      alvo.querySelector('span').textContent = `Tem certeza, amor? Toque de novo · ${tamanhoLegivel(volume(id).tamanho)}`;
+      alvo.querySelector('span').textContent = `Tem certeza? Toca de novo · ${tamanhoLegivel(volume(id).tamanho)}`;
       return;
     }
 

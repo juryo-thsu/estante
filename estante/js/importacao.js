@@ -77,7 +77,7 @@ async function miniatura(imagem) {
  */
 export async function lerVolume(arquivo) {
   if (/\.(cbr|rar)$/i.test(arquivo.name)) {
-    throw new ErroDeImportacao('Esse é CBR, amor. Preciso dele em CBZ.');
+    throw new ErroDeImportacao('Esse é CBR. Preciso dele em CBZ.');
   }
   if (arquivo.size === 0) throw new ErroDeImportacao('Esse arquivo tá vazinho.');
 
@@ -89,7 +89,7 @@ export async function lerVolume(arquivo) {
     // a assinatura "PK" no começo do arquivo separa os dois casos.
     const comeco = new Uint8Array(await arquivo.slice(0, 2).arrayBuffer());
     const pareceZip = comeco[0] === 0x50 && comeco[1] === 0x4b;
-    if (erro.codigo === 'nao-zip' && !pareceZip) throw new ErroDeImportacao('Esse não é CBZ nem ZIP, Lulu.');
+    if (erro.codigo === 'nao-zip' && !pareceZip) throw new ErroDeImportacao('Esse não é CBZ nem ZIP.');
     throw new ErroDeImportacao('Esse arquivo veio quebradinho ou pela metade.');
   }
 

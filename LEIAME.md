@@ -1,7 +1,19 @@
 # Estante Tsukina
 
 Leitor de mangás para iPhone (PWA), em HTML, CSS e JavaScript puros, sem etapa de build.
-O design vem do arquivo do Figma "App · Design e protótipo".
+A base de design vem do arquivo do Figma "App · Design e protótipo", com direção editorial inspirada em Nana e Paradise Kiss na versão 0.8.0.
+
+## Design e motion · 0.8.0
+
+- Entrada com composição original de capas, xadrez, borboleta e selo dedicado à Lua, desenhada em CSS/SVG e disponível offline.
+- Temas Noite e Morango com contraste revisado, tipografia editorial, cartões de tema ilustrados e novos estados de interação.
+- Navegação com indicador deslizante; entradas em sequência nas telas; capas que se reposicionam ao filtrar, buscar e ordenar; feedback ao pressionar botões e passar o mouse sobre capas.
+- Movimento de 180–220 ms e pequenos atrasos entre elementos. Com `prefers-reduced-motion`, ficam apenas fades curtos; mudar essa preferência também cancela as animações em andamento.
+- Layout de 320 px até desktop, com duas, três ou quatro colunas de capas. As margens, os títulos e a entrada maiores só valem com 600 px de altura ou mais: com o iPhone deitado, fica o layout de celular (com mais colunas). O leitor continua ocupando toda a janela.
+- Saíram o backup JSON, o cartão "Proteger seus mangás", o botão "Preferências de leitura" de Ajustes (só mostrava um aviso), as descrições dos temas e os subtextos e slogans enfeitados (pedido de J). Rótulos em maiúsculas têm no mínimo 10 a 11 px. A persistência continua sendo pedida sozinha depois da primeira importação.
+- Nenhuma dependência de produção nova. `js/motion.js` usa a Web Animations API e mantém a interface funcional sem ela. O service worker inclui o módulo no novo cache.
+
+Para conferir: alterne as abas e os temas; busque, filtre e ordene alguns volumes; abra os favoritos e o leitor. Repita com movimento reduzido no sistema. No iPhone instalado, confira também as áreas seguras e a reabertura offline.
 
 ## Pastas
 
@@ -11,7 +23,7 @@ Tsukina/
 │  ├─ index.html   moldura (tela, navegação inferior, aviso)
 │  ├─ sw.js        service worker: guarda o app no aparelho para abrir sem internet
 │  ├─ css/         tokens (temas), base, components, screens, fonts
-│  ├─ js/          app, store, ui, db, zip, importacao, paginas, offline, armazenamento e uma tela por arquivo em views/
+│  ├─ js/          app, store, ui, motion, db, zip, importacao, paginas, offline, armazenamento e views/
 │  └─ assets/      ícones (SVG do Figma), fontes e ícones do app
 ├─ docs/           especificação e direção visual copiadas do Figma (só no PC)
 ├─ entregas/       cópia da etapa 1; as entregas seguintes viram tags do git (só no PC)
@@ -45,14 +57,15 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 
 ## Como o código está organizado
 
-- `css/tokens.css` espelha a coleção de variáveis "Estante / Temas" do Figma. Os componentes usam só as variáveis `--color-*`, nunca cores fixas. O tema é o atributo `data-tema` no `<html>` (`noite` ou `morango`).
+- `css/tokens.css` centraliza os temas Noite e Morango, a tipografia e o movimento. Os componentes usam só as variáveis `--color-*`, nunca cores fixas. O tema é o atributo `data-tema` no `<html>` (`noite` ou `morango`).
 - `css/components.css` tem as peças reutilizáveis (botão, filtro, capa, cartão de volume, pérolas, navegação, folha de ações). `css/screens.css` tem o que é de cada tela.
 - Os SVGs de `assets/icons/` são os exportados do Figma, sem alteração. A cor é aplicada por máscara no CSS, para seguir o tema.
 - `js/store.js` guarda o estado e o que fica salvo no aparelho. As telas em `js/views/` só leem do store e devolvem HTML; os toques são tratados em `js/app.js`.
+- `js/motion.js` cuida das entradas de tela e da posição das capas entre renderizações, respeitando movimento reduzido. Atualizações de armazenamento/offline só redesenham a tela de dados, preservando o foco e as animações nas outras telas.
 - `js/db.js` é o IndexedDB: a loja `volumes` (série, progresso, marcas, miniatura da capa, índice das páginas) e a loja `arquivos` (o CBZ/ZIP original, na mesma chave). Remover do aparelho apaga só a segunda.
-- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-4b-1`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
-- `js/offline.js` registra o service worker e pergunta a ele se o cache está completo, para mostrar "Pronto para usar offline" em Ajustes → Dados, armazenamento e backup. No Live Server (`127.0.0.1`) o service worker fica desligado, para cada recarga mostrar o código editado; para testar o offline no computador, abra `http://127.0.0.1:5500/?offline`.
-- `js/armazenamento.js` lê o espaço usado e a cota (`navigator.storage.estimate`) e a persistência (`persisted`/`persist`) para a tela Dados e app.
+- `sw.js` guarda todos os arquivos do app num cache com o nome da versão (`estante-` + `VERSAO`). **A cada mudança em `estante/` que vai para a `main`, suba `VERSAO` no `sw.js`; arquivo novo entra também na lista `ARQUIVOS`.** Sem isso, quem já tem o app instalado continua com a versão antiga. Os CBZ não passam pelo cache: ficam só no IndexedDB.
+- `js/offline.js` registra o service worker e pergunta a ele se o cache está completo, para mostrar "Pronto para usar offline" em Ajustes → Seus dados. No Live Server (`127.0.0.1`) o service worker fica desligado, para cada recarga mostrar o código editado; para testar o offline no computador, abra `http://127.0.0.1:5500/?offline`.
+- `js/armazenamento.js` lê o espaço usado e a cota (`navigator.storage.estimate`) e a persistência (`persisted`/`persist`) para a tela Seus dados.
 - `js/paginas.js` extrai as páginas do CBZ guardado para o leitor, só numa janela em volta da atual (uma antes, duas depois); o resto tem o object URL revogado. `js/views/leitor.js` é o leitor: uma camada sobre o app que troca só a imagem e os textos a cada página.
 - `js/views/editor.js` é o editor de anotações (camada sobre o app e o leitor) e `js/views/anotacoes.js` a lista "Anotações". As marcas são desenhadas por `camadaDeMarcas` em `js/ui.js`, igual no editor e nas miniaturas.
 - `js/zip.js` é o leitor de ZIP; `js/importacao.js` valida o arquivo, ordena as páginas, gera a miniatura e deduz série e volume pelo nome.
@@ -63,10 +76,11 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 1. **Estante, Favoritos, Ajustes, temas e folha de ações** (feita).
 2. Importação de CBZ/ZIP, armazenamento, instalação e uso offline, em três partes: 2a importar e guardar, 2b instalar e usar offline e 2c armazenamento (entregues, em teste no iPhone).
 3. Leitor, em três partes: 3a ler, 3b zoom e opções por série, 3c fim do volume, página dupla e tela ligada (entregues, em teste no iPhone).
-4. Em duas partes: 4a gestão de espaço e backup, 4b anotações (entregues, em teste no iPhone).
+4. Em duas partes: 4a gestão de espaço (o backup JSON entrou e saiu na 0.8.0), 4b anotações (entregues, em teste no iPhone).
 
 ## Decisões tomadas onde o Figma não definia
 
+- Na versão 0.8.0, a nova direção visual pedida usa Nana e Paradise Kiss como referências de composição: xadrez, bordô, romance, borboleta e joalheria. Os ornamentos são originais; as capas da coleção continuam vindo dos arquivos importados. O layout cresce até 1100 px no computador.
 - Tema selecionado em Ajustes: contorno dourado (no Figma os dois cartões são iguais).
 - Volumes ocultos: link "N volumes ocultos · Mostrar" no fim da coleção.
 - Ordenação: o toque alterna entre Volume ↑, Volume ↓ e Recentes.
@@ -87,8 +101,7 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Estados do cartão do offline que o Figma não mostra: "Conferindo…", "Preparando o uso offline…", "Uso offline indisponível" e, no computador, "Uso offline desligado".
 - No Safari do iPhone, fora da tela de início, a tela "Adicionar mangá" mostra "Instale antes de importar": o app instalado guarda os dados separado do Safari, e importar antes de instalar obrigaria a importar de novo.
 - Espaço no aparelho: a segunda linha mostra volumes, quantos estão sem arquivo e o limite do navegador ("2 volumes · limite de 10,7 GB"); a barra é o uso sobre esse limite, com 4 px mínimos para não sumir. As "páginas anotadas" do Figma entram com as anotações (etapa 4).
-- Persistência: além de "Armazenamento local padrão" e "Persistência ativa" do Figma, há "Persistência não concedida" (com "Tentar de novo") e "Persistência indisponível". "Persistência concedida" é um botão desligado.
-- Depois da primeira importação de cada abertura, o app pede persistência sozinho (sem pergunta na tela, no Safari e no Chrome). Assim os mangás ficam protegidos mesmo que ninguém abra Ajustes.
+- Depois da primeira importação de cada abertura, o app pede persistência sozinho (sem pergunta na tela, no Safari e no Chrome). É o único pedido: na 0.8.0 saíram o cartão de persistência e o backup JSON (J achou inúteis; o código está na tag `etapa-4a` se um dia voltar).
 - Leitor: janela fixa de páginas (uma antes, duas depois), sem medir a memória do aparelho (o Safari não informa). A página nova só troca depois de decodificada.
 - Leitor: abre com os controles visíveis, exceto na primeira leitura, que mostra a dica de direção por 3 s com os controles escondidos. A dica aparece uma vez só, para o app todo.
 - Leitor: volume lido ou nunca aberto começa da página 1; em leitura, volta à página salva. O progresso é salvo a cada página.
@@ -100,7 +113,7 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Rolagem vertical: as páginas carregam quando chegam perto da tela (uma tela de margem) e são soltas quando se afastam; um toque parado alterna os controles. "Ver zoom 2×" fica desligado nesse modo.
 - Ferramenta do leitor: o Figma mostra "Marcar" em uns frames e "Páginas" em outros; ficou "Marcar" (o frame principal). A lista de páginas marcadas entra com "Páginas e anotações" (etapa 4).
 - Ajustes → Preferências de leitura explica que as preferências ficam em cada série (Opções, dentro do leitor).
-- Fim do volume: avançar na última página abre "Volume concluído" (com o verso do Djavan). Com "Próximo volume automático" ligado (padrão, como no Figma) e um volume seguinte da série no aparelho, ele abre sozinho depois do brinde, com "Você continuou no próximo volume" embaixo da página. Sem próximo: "Este é o último volume da série no aparelho." e só "Voltar à biblioteca".
+- Fim do volume: avançar na última página abre "Volume terminado!" (com o verso do Djavan). Com "Emendar no próximo volume" ligado (padrão) e um volume seguinte da série guardado, ele abre sozinho depois de 1 s, com "Já abrindo o próximo…" e depois "Seguindo pro próximo" embaixo da página. Sem frase extra quando não abre sozinho: os botões ("Ler o Volume NN", "Voltar pra estante") bastam.
 - Próximo volume = o de menor número acima do atual, da mesma série, que não está oculto e tem arquivo.
 - Na rolagem vertical, o fim é o botão "Concluir volume" depois da última página (sem virada para concluir).
 - Fim do volume: no lugar dos copos do Figma (pedido de J), um verso de "Lilás", do Djavan (1984): “Amanhã, outro dia, / Lua sai, ventania”, com o crédito embaixo. Aparece com fade de 1 s (curto com movimento reduzido), na cor de destaque do tema.
@@ -109,8 +122,6 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - Manter tela acesa (Wake Lock): opção por série, desligada por padrão. O pedido sai do toque no botão; ao voltar para o app a trava é pedida de novo; recusa ("Tentar de novo") e indisponibilidade aparecem no cartão.
 - O leitor segura os toques até sumir e não gera clique: sem isso, o toque que conclui o volume caía na capa de baixo e reabria o volume.
 - Gerenciar volumes: abre com os volumes concluídos já marcados (são os que liberam espaço sem perder nada); o cartão inteiro marca e desmarca. "Remover" pede um segundo toque, como na folha de ações. Só aparecem volumes com arquivo no aparelho.
-- Backup JSON (`versao: 1`): progresso, lido em, favorito, oculto, marcadores, anotações e as opções por série. Nunca os CBZ nem as capas. No iPhone, "Exportar JSON" abre a folha de compartilhar ("Salvar em Arquivos"); no computador, baixa o arquivo `estante-backup-AAAA-MM-DD.json`.
-- Restaurar: confere `app` e `versao` (versão mais nova é recusada) e acha cada volume pelo ID ou, se o app foi reinstalado, pela série e número. Volume que não está no aparelho entra como "Arquivo removido", com o progresso; ao importar o CBZ, ele volta com tudo. O resultado ("Backup pronto", "Backup restaurado", "Backup não restaurado") aparece no topo de Dados e app enquanto a pessoa está lá.
 - Anotações: uma por página, guardada no próprio volume (`anotacoes`), com página, capítulo, `pageId` (nome da página dentro do ZIP), marcas e observação. As marcas ficam em coordenadas de 0 a 1 sobre a página e numa camada separada; a imagem original nunca muda. A cor é guardada pelo nome (`pressed` ou `accent`), então segue o tema.
 - Capítulo: vem da pasta da página dentro do ZIP ("Cap 02/…", "Chapter 3/…", "c003/…"). Página solta na raiz do ZIP não tem capítulo, e a anotação mostra só volume e página.
 - Editor: Caneta (traço livre), Círculo (arrastar de um canto ao outro), Texto (toca, escreve, Enter) e Borracha (toca ou arrasta sobre a marca). Espessura alterna 2, 3 e 5 px. "Ver original" esconde as marcas (vira "Mostrar marcas"). Salvar sem marcas nem observação apaga a anotação da página.
@@ -118,4 +129,4 @@ O app é feito para o Safari do iOS 18.4 ou mais novo.
 - O leitor não desenha as anotações sobre a página, como nos frames do leitor no Figma; elas aparecem no editor e nas miniaturas da lista.
 - Lista "Anotações": junta páginas anotadas e páginas marcadas (Marcar, da 3b); página só marcada aparece como "Página marcada" com "Anotar" e "Ler página". Abre pela estante (Anotações), pela folha de ações (vai direto para o volume) e por Ajustes. A aba "Estante" volta para a biblioteca. "Anotar página atual" usa o volume em leitura (ou o último lido) e a página salva.
 - Miniaturas da lista: extraídas do CBZ só com a tela aberta e soltas ao sair. Volume sem arquivo mostra "Sem arquivo" e não deixa editar.
-- Textos (pedido de J, no lugar dos textos do Figma): o app se chama Estante Tsukina e fala com a Lua em tom carinhoso, por apelidos (Lua, Lulu, Luana, amor, amorzinho, xuxu); sem "aparelho" e sem textos de instrução que não fazem falta. Os textos anteriores estão em `docs/textos-originais.md` (só no PC) e na tag `etapa-4b`. Embaixo do ícone, na Tela de Início, o nome é só "Tsukina" (o iOS corta nomes longos).
+- Textos (pedido de J, no lugar dos textos do Figma): o app se chama Estante Tsukina e tem tom informal, sem apelidos nem vocativos (J achou que chamar de "amor" e "xuxu" toda hora ficava feio; a Lua aparece só nas dedicatórias); sem "aparelho" e sem textos de instrução que não fazem falta. Os textos anteriores estão em `docs/textos-originais.md` (só no PC) e na tag `etapa-4b`. Embaixo do ícone, na Tela de Início, o nome é só "Tsukina" (o iOS corta nomes longos).

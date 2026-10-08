@@ -32,10 +32,8 @@ export const estado = {
   importacao: null,
   /** 'verificando' | 'preparando' | 'pronto' | 'indisponivel' | 'desligado' (no computador) */
   offline: 'verificando',
-  /** navigator.storage: `{ suportado, usado, cota, persistente, recusada }`; vazio até a primeira leitura. */
+  /** navigator.storage: `{ suportado, usado, cota, persistente }`; vazio até a primeira leitura. */
   armazenamento: {},
-  /** Resultado do último backup, mostrado no topo de Dados e app: `{ tipo, titulo, texto }` ou null. */
-  avisoDeDados: null,
   /** Volumes marcados em "Gerenciar volumes". */
   paraRemover: new Set(),
 };
@@ -167,7 +165,7 @@ export function definirArmazenamento(dados) {
 
 export function definirFiltro(filtro) {
   estado.filtro = filtro;
-  avisar();
+  avisar('colecao');
 }
 
 export function definirBusca(texto) {
@@ -179,7 +177,7 @@ export function proximaOrdem() {
   const ciclo = ['volume-asc', 'volume-desc', 'recentes'];
   estado.ordem = ciclo[(ciclo.indexOf(estado.ordem) + 1) % ciclo.length];
   salvarPreferencias();
-  avisar();
+  avisar('colecao');
 }
 
 export function alternarFavorito(id) {
@@ -339,104 +337,11 @@ export function alternarParaRemover(id) {
   avisar();
 }
 
-// ---------- Backup (JSON) ----------
-// Progresso, marcadores, anotações e opções por série. Nunca os CBZ/ZIP nem as capas.
-
-const VERSAO_DO_BACKUP = 1;
+// ---------- Anotações ----------
 
 /** Páginas com anotação, somadas em todos os volumes (para "N páginas anotadas"). */
 export function paginasAnotadas() {
   return estado.volumes.reduce((total, v) => total + new Set((v.anotacoes || []).map((a) => a.pagina)).size, 0);
-}
-
-export function montarBackup() {
-  return {
-    app: 'estante',
-    versao: VERSAO_DO_BACKUP,
-    exportadoEm: new Date().toISOString(),
-    series: estado.series,
-    volumes: estado.volumes.map((v) => ({
-      id: v.id,
-      serie: v.serie,
-      numero: v.numero,
-      paginas: v.paginas,
-      pagina: v.pagina,
-      lidoEm: v.lidoEm ?? null,
-      favorito: Boolean(v.favorito),
-      oculto: Boolean(v.oculto),
-      marcadores: v.marcadores || [],
-      anotacoes: v.anotacoes || [],
-    })),
-  };
-}
-
-export function definirAvisoDeDados(aviso) {
-  estado.avisoDeDados = aviso;
-  avisar();
-}
-
-export class ErroDeBackup extends Error {}
-
-const numeroValido = (n) => typeof n === 'number' && Number.isFinite(n) && n >= 0;
-
-/**
- * Restaura um backup. Cada volume é achado pelo ID ou, se o app foi reinstalado (IDs novos),
- * pela série e número. Volume que não está no aparelho entra só com os dados, como
- * "Arquivo removido": ao importar o CBZ de novo, ele volta com o progresso.
- */
-export async function restaurarBackup(dados) {
-  if (!dados || dados.app !== 'estante' || !Array.isArray(dados.volumes)) {
-    throw new ErroDeBackup('Esse arquivo não é um backup da Tsukina, amor.');
-  }
-  if (!numeroValido(dados.versao) || dados.versao > VERSAO_DO_BACKUP) {
-    throw new ErroDeBackup('Esse backup é de uma Tsukina mais nova. Abre o app de novo e tenta outra vez.');
-  }
-
-  let restaurados = 0;
-  let novos = 0;
-  for (const item of dados.volumes) {
-    if (typeof item?.id !== 'string' || typeof item.serie !== 'string' || !item.serie.trim() || !numeroValido(item.numero)) continue;
-    const paginas = numeroValido(item.paginas) && item.paginas > 0 ? item.paginas : null;
-    const marcas = {
-      pagina: numeroValido(item.pagina) ? item.pagina : 0,
-      lidoEm: numeroValido(item.lidoEm) ? item.lidoEm : null,
-      favorito: item.favorito === true,
-      oculto: item.oculto === true,
-      marcadores: Array.isArray(item.marcadores) ? item.marcadores.filter(numeroValido) : [],
-      anotacoes: Array.isArray(item.anotacoes) ? item.anotacoes.filter((a) => a && numeroValido(a.pagina)) : [],
-    };
-
-    const local = volume(item.id) || doVolume(item.serie, item.numero);
-    if (local) {
-      const atualizado = { ...registro(local), ...marcas };
-      atualizado.pagina = Math.min(atualizado.pagina, local.paginas || atualizado.pagina);
-      await db.salvarVolume(atualizado);
-      Object.assign(local, atualizado);
-      restaurados++;
-    } else {
-      const novo = {
-        id: item.id,
-        serie: item.serie.trim(),
-        numero: item.numero,
-        paginas: paginas ?? Math.max(1, marcas.pagina),
-        adicionadoEm: Date.now(),
-        temArquivo: false,
-        paginasDoArquivo: null,
-        capaBlob: null,
-        ...marcas,
-      };
-      await db.salvarVolume(novo);
-      estado.volumes.push(comCapa(novo));
-      novos++;
-    }
-  }
-
-  if (dados.series && typeof dados.series === 'object') {
-    estado.series = { ...estado.series, ...dados.series };
-    salvarPreferencias();
-  }
-  avisar();
-  return { restaurados, novos };
 }
 
 // ---------- Importação ----------
@@ -534,7 +439,7 @@ async function importarUm(item) {
       item.mensagem = erro.message;
       item.rotulo = 'Não deu';
     } else if (erro?.name === 'QuotaExceededError') {
-      item.mensagem = 'Acabou o espaço, amor. Libera um pouquinho e tenta de novo.';
+      item.mensagem = 'Acabou o espaço. Libera um pouco e tenta de novo.';
       item.rotulo = 'Sem espaço';
     } else {
       console.error(erro);
@@ -570,8 +475,8 @@ export function corrigirResultado(chave, serieDigitada, numeroDigitado) {
   const serie = serieDigitada.trim().replace(/\s+/g, ' ');
   const numero = Number(String(numeroDigitado).trim().replace(',', '.'));
   let erro = null;
-  if (!serie) erro = 'Qual o nome da série, amor?';
-  else if (String(numeroDigitado).trim() === '' || !Number.isFinite(numero) || numero < 0) erro = 'O volume tem que ser um número, xuxu.';
+  if (!serie) erro = 'Qual o nome da série?';
+  else if (String(numeroDigitado).trim() === '' || !Number.isFinite(numero) || numero < 0) erro = 'O volume tem que ser um número.';
   else {
     const outro = doVolume(serie, numero);
     if (outro && outro !== v) erro = `${outro.serie} · Volume ${String(numero).padStart(2, '0')} já está na estante.`;

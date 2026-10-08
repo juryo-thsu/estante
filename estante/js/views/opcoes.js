@@ -19,8 +19,8 @@ function cartao(titulo, texto, conteudo) {
 }
 
 const TELA_ACESA = {
-  indisponivel: 'Esse navegador não deixa, amor.',
-  recusada: 'O iPhone não deixou agora, amor. Tenta de novo depois.',
+  indisponivel: 'Esse navegador não deixa.',
+  recusada: 'O iPhone não deixou agora. Tenta de novo depois.',
 };
 
 /** `telaAcesa`: situação do último pedido de Wake Lock ('ativa', 'recusada', 'indisponivel' ou null). */
@@ -32,14 +32,13 @@ export function renderOpcoes(serie, p, telaAcesa = null) {
   <div class="rolagem" data-rolagem="opcoes">
     <div class="importar">
       <h2 class="importar__titulo">${esc(serie)}</h2>
-      <p class="importar__texto">Do jeitinho que você gosta, só nessa série.</p>
 
       ${cartao('Direção de leitura', '', `<div class="par-de-botoes" role="group" aria-label="Direção de leitura">
         ${escolha('Direita → esquerda', 'direcao', 'rtl', p.direcao)}
         ${escolha('Esquerda → direita', 'direcao', 'ltr', p.direcao)}
       </div>`)}
 
-      ${cartao('Como você quer ler, Lua?', '', `<div class="pilha-de-botoes" role="group" aria-label="Modo de leitura">
+      ${cartao('Modo de leitura', '', `<div class="pilha-de-botoes" role="group" aria-label="Modo de leitura">
         ${escolha('Páginas', 'modo', 'paginas', p.modo)}
         ${escolha('Rolagem vertical', 'modo', 'vertical', p.modo)}
         ${escolha('Dupla em paisagem', 'modo', 'dupla', p.modo)}
@@ -48,7 +47,7 @@ export function renderOpcoes(serie, p, telaAcesa = null) {
       ${cartao('Zoom', '',
         `<button class="botao botao--secundario botao--44" type="button" data-opcao="ver-zoom"${p.modo === 'paginas' ? '' : ' disabled'}>Ver zoom 2×</button>`)}
 
-      ${cartao('Pros seus olhinhos', '', `<div class="par-de-botoes">
+      ${cartao('Cores', '', `<div class="par-de-botoes">
         ${escolha('Preto puro', 'pretoPuro', 'true', String(p.pretoPuro))}
         ${escolha('Sépia', 'sepia', 'true', String(p.sepia))}
       </div>`)}

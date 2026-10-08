@@ -1,11 +1,57 @@
-/* Estante · telas (seção "01 · Estante e biblioteca" do Figma) */
+/* Estante · telas e composição editorial */
+
+/* ---------- Primeiro capítulo ---------- */
+.boas-vindas { padding: 24px var(--gutter) 20px; }
+.marca-editorial {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+.marca-editorial > .sobretitulo { max-width: 76px; letter-spacing: 0.08em; line-height: 1.5; }
+.marca-editorial > .sobretitulo:last-child { text-align: right; }
+.marca-editorial__nome { font: 700 32px/1 var(--font-display); letter-spacing: -0.07em; }
+.marca-editorial__nome > span { display: inline-block; margin-left: 3px; color: var(--color-accent); font-size: 22px; vertical-align: top; }
+.boas-vindas__miolo { display: grid; gap: 12px; }
+.boas-vindas__texto { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.boas-vindas__texto h1 { font: 700 clamp(35px, 9vw, 44px)/1.12 var(--font-display); letter-spacing: -0.055em; }
+.boas-vindas__texto h1 em { color: var(--color-rose); }
+.boas-vindas__texto > p:not(.sobretitulo) { max-width: 330px; color: var(--color-muted); font: var(--t-body); font-weight: 400; line-height: 1.7; }
+.boas-vindas__texto .botao { max-width: 350px; min-height: 52px; margin-top: 6px; }
+.boas-vindas__texto .botao > span { font-size: 20px; }
+.boas-vindas__detalhe { display: flex; align-items: center; gap: 6px; color: var(--color-muted); font: var(--t-small); }
+
+/* Capas imaginárias: desenho vetorial/CSS local, sem peso de imagens remotas. */
+.colagem { position: relative; width: 100%; max-width: 390px; height: 286px; margin-inline: auto; isolation: isolate; }
+.colagem__orbita { position: absolute; inset: 35px 10px 32px; border: 1px solid var(--color-border); border-radius: 50%; transform: rotate(-22deg); }
+.colagem__orbita::after { content: ""; position: absolute; width: 8px; height: 8px; top: 25px; right: 38px; border-radius: 50%; background: var(--color-pearl); box-shadow: 0 0 0 5px var(--color-glow); }
+.colagem__capa { position: absolute; top: 36px; width: 142px; height: 194px; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; border: 1px solid var(--color-hairline); box-shadow: 0 14px 30px var(--color-shadow); }
+.colagem__capa > span { font: 600 7px/1.5 var(--font-ui); letter-spacing: 0.16em; }
+.colagem__capa--xadrez { left: calc(50% - 137px); transform: rotate(-12deg); background-color: var(--color-editorial); background-image: repeating-linear-gradient(0deg, transparent 0 23px, var(--color-shadow) 23px 37px, transparent 37px 40px, var(--color-check) 40px 41px, transparent 41px 48px), repeating-linear-gradient(90deg, transparent 0 23px, var(--color-shadow) 23px 37px, transparent 37px 40px, var(--color-check) 40px 41px, transparent 41px 48px); color: var(--color-paper); }
+.colagem__capa--xadrez > strong { align-self: center; font: 700 57px/1 var(--font-display); letter-spacing: -0.07em; }
+.colagem__capa--flor { left: calc(50% - 2px); top: 49px; transform: rotate(9deg); color: var(--color-ink); background: var(--color-paper); }
+.colagem__capa--flor::after { content: ""; position: absolute; inset: 6px; border: 1px solid currentColor; opacity: 0.2; pointer-events: none; }
+.colagem__capa--flor > strong { font: 700 28px/1 var(--font-display); letter-spacing: -0.06em; }
+.borboleta { position: absolute; width: 96px; height: 65px; top: 27px; right: 16px; color: var(--color-editorial); }
+.colagem__capa--flor > strong { margin-top: auto; margin-bottom: 13px; }
+.colagem__estrela { position: absolute; color: var(--color-accent); font: 38px/1 var(--font-display); }
+.colagem__estrela--um { top: 14px; right: 23px; }
+.colagem__estrela--dois { bottom: 53px; left: 12px; font-size: 23px; }
+.colagem__selo { position: absolute; right: 3px; bottom: 28px; display: grid; place-content: center; width: 83px; height: 83px; border: 1px solid var(--color-border); border-radius: 50%; background: var(--color-background); color: var(--color-accent); text-align: center; font: 700 12px/1.6 var(--font-volume); transform: rotate(-11deg); }
+.colagem__selo em { color: var(--color-rose); }
+
+.filete-editorial { display: flex; align-items: center; gap: 14px; color: var(--color-muted); font: 700 12px/1.4 var(--font-volume); font-style: italic; }
+.filete-editorial::after { content: ""; height: 1px; flex: 1; background: var(--color-border); }
+.filete-editorial > span:last-child { order: 1; color: var(--color-accent); font-size: 20px; }
 
 /* ---------- Início — Estante ---------- */
 .estante {
   display: flex;
   flex-direction: column;
-  gap: var(--space-12);
-  padding: var(--space-12) var(--gutter) 32px;
+  gap: var(--space-24);
+  padding: var(--space-24) var(--gutter) 32px;
 }
 
 .topo {
@@ -22,7 +68,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-12);
-  height: 38px;
+  min-height: 42px;
 }
 .simbolo {
   display: grid;
@@ -41,12 +87,14 @@
 }
 .adicionar {
   flex: none;
-  display: grid;
-  place-items: center;
-  width: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 110px;
   height: 44px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-4);
+  border-radius: var(--radius-8);
   background: var(--color-action);
   color: var(--color-onAccent);
   font: var(--t-small);
@@ -62,12 +110,12 @@
   display: flex;
   align-items: center;
   gap: var(--space-16);
-  min-height: 152px;
-  padding: 8.5px 15px;
+  min-height: 176px;
+  padding: 19px;
   overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-8);
-  background: var(--color-surface);
+  border-radius: var(--radius-12);
+  background: radial-gradient(ellipse at 0% 100%, var(--color-glow), transparent 75%), var(--color-surface);
 }
 .retomar__xadrez {
   position: absolute;
@@ -89,10 +137,12 @@
 .retomar__chamada {
   color: var(--color-accent);
   font: var(--t-label);
+  font-size: 11px;
+  letter-spacing: 0.1em;
 }
 .retomar__volume {
   overflow: hidden;
-  font: var(--t-section);
+  font: 700 20px/1.3 var(--font-display);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -103,6 +153,7 @@
 .retomar .botao {
   min-height: 44px;
   border-radius: var(--radius-6);
+  margin-top: 5px;
 }
 
 /* Busca e anotações */
@@ -121,6 +172,7 @@
   border-radius: var(--radius-6);
   background: var(--color-surface);
   color: var(--color-muted);
+  border: 1px solid var(--color-hairline);
 }
 .busca:focus-within {
   outline: 2px solid var(--color-accent);
@@ -168,7 +220,7 @@
   white-space: nowrap;
 }
 .atalho--anotacoes {
-  width: 112px;
+  width: 86px;
 }
 .atalho--ver {
   width: 106px;
@@ -178,15 +230,17 @@
 .colecao {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-16);
 }
 .colecao__topo {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-8);
-  height: 32px;
+  min-height: 44px;
 }
+.colecao__contagem { margin-left: 6px; color: var(--color-muted); font: var(--t-small); }
+.colecao .filtros { padding: 4px; border: 1px solid var(--color-hairline); border-radius: var(--radius-12); background: var(--color-surface); }
 .secao-titulo {
   min-width: 0;
   overflow: hidden;
@@ -211,7 +265,12 @@
   font: var(--t-label);
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
 }
+.colecao__grupo::after { content: ""; height: 1px; flex: 1; background: var(--color-hairline); }
 .colecao__vazio {
   padding-block: var(--space-24);
   color: var(--color-muted);
@@ -397,46 +456,45 @@
 .ajustes__secao {
   font: var(--t-section);
 }
-.ajustes__texto {
-  color: var(--color-muted);
-}
 .temas {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-12);
 }
 .tema {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
   min-width: 0;
-  height: 128px;
   padding: 15px;
   overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-4);
+  border-radius: var(--radius-12);
   background: var(--color-surface);
   transition: border-color var(--motion-pulse) var(--ease), background-color var(--motion-out) var(--ease);
 }
 .tema[aria-pressed="true"] {
   border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
 }
+.tema[aria-pressed="true"]::after { content: "✓"; position: absolute; right: 12px; top: 12px; display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--color-border); border-radius: 50%; background: var(--color-background); color: var(--color-accent); }
 .tema__amostra {
+  position: relative;
   align-self: stretch;
-  height: 20px;
+  height: 72px;
+  flex: none;
   border-radius: var(--radius-4);
-  background: var(--color-action);
+  background: linear-gradient(110deg, var(--color-ink) 55%, var(--color-editorial) 55% 80%, var(--color-check) 80%);
 }
+.tema__amostra::after { content: "Aa ✧"; position: absolute; bottom: 9px; left: 12px; color: var(--color-paper); font: 700 26px/1 var(--font-display); }
 .tema__amostra--morango {
-  background: var(--color-rose);
+  background: linear-gradient(110deg, var(--color-paper) 55%, var(--color-check) 55% 80%, var(--color-editorial) 80%);
 }
+.tema__amostra--morango::after { color: var(--color-ink); }
 .tema__nome {
   font: var(--t-section);
-}
-.tema__descricao {
-  color: var(--color-muted);
-  font: var(--t-small);
 }
 .ajustes__nota {
   color: var(--color-muted);
@@ -445,6 +503,47 @@
 .ajustes__versao {
   color: var(--color-accent);
   font: var(--t-label);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+/* Só com altura de tela grande: o iPhone deitado (até 600 px de altura) fica com o layout de celular, como o leitor. */
+@media (min-width: 700px) and (min-height: 601px) {
+  .boas-vindas { padding-top: 32px; }
+  .marca-editorial > .sobretitulo { max-width: none; }
+  .marca-editorial__nome { font-size: 42px; }
+  .boas-vindas__miolo { grid-template-columns: 1fr 1fr; align-items: center; gap: 36px; min-height: 540px; padding-block: 32px; }
+  .colagem { height: 370px; }
+  .colagem__capa { top: 66px; width: 164px; height: 232px; }
+  .colagem__capa--xadrez { left: calc(50% - 159px); }
+  .colagem__capa--flor { top: 84px; }
+  .colagem__capa--flor > strong { font-size: 34px; }
+  .colagem__selo { bottom: 39px; }
+  .borboleta { width: 115px; height: 80px; top: 37px; }
+  .colagem__orbita { inset: 26px -4px 35px; }
+  .boas-vindas__texto { align-items: flex-start; text-align: left; }
+  .boas-vindas__texto h1 { font-size: clamp(40px, 4.5vw, 56px); }
+  .retomar { gap: 24px; padding: 24px; }
+  .retomar .capa--retomar { width: 94px; height: 132px; transform: rotate(-4deg); }
+  .retomar__texto { gap: 8px; }
+  .retomar__volume { font-size: 28px; }
+  .retomar .botao { max-width: 270px; }
+  .retomar .perolas { max-width: 400px; }
+  .retomar__xadrez { width: 180px; height: 14px; mask-size: 180px 14px; -webkit-mask-size: 180px 14px; }
+  .busca-linha { max-width: 650px; }
+  .colecao .filtros { max-width: 480px; }
+}
+
+@media (max-width: 359px) {
+  :root { --gutter: 18px; }
+  .retomar { padding: 14px; gap: 10px; }
+  .retomar .capa--retomar { width: 55px; height: 83px; }
+  .retomar__chamada { letter-spacing: 0.06em; }
+  .marca-editorial { gap: 8px; }
+  .marca-editorial > .sobretitulo { max-width: 60px; font-size: 10px; letter-spacing: 0.04em; }
+  .marca-editorial__nome { font-size: 28px; white-space: nowrap; }
+  .adicionar { width: 98px; }
+  .tema { padding: 12px; }
 }
 
 /* ---------- Instalar app ---------- */

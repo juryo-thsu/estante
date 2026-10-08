@@ -3,9 +3,9 @@
 import { esc, icone } from '../ui.js';
 
 const PASSOS = [
-  ['1. Abre no Safari, amor', ''],
+  ['1. Abre no Safari', ''],
   ['2. Toca em Compartilhar', 'E escolhe “Adicionar à Tela de Início”.'],
-  ['3. Adicionar e pronto', 'Agora é só abrir pelo ícone novo, xuxu.'],
+  ['3. Adicionar e pronto', 'Agora é só abrir pelo ícone novo.'],
 ];
 
 export function renderInstalar() {
@@ -16,7 +16,7 @@ export function renderInstalar() {
   <div class="rolagem" data-rolagem="instalar">
     <div class="importar">
       <span class="icone-do-app" aria-hidden="true">${icone('planeta-original')}</span>
-      <h2 class="importar__titulo">Sua estante sempre pertinho, Lua</h2>
+      <h2 class="importar__titulo">Sua estante sempre pertinho</h2>
       <ol class="passos">
         ${PASSOS.map(([titulo, texto]) => `<li class="cartao-dados">
           <h3 class="cartao-dados__titulo">${esc(titulo)}</h3>

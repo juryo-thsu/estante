@@ -32,7 +32,7 @@ function modelo(v, total, controlesVisiveis) {
   return `<div class="leitor__pagina">
       <img class="leitor__imagem" alt="" draggable="false">
       <img class="leitor__imagem leitor__imagem--par" alt="" draggable="false" hidden>
-      <p class="leitor__erro" hidden>Essa página não quis abrir, amor.</p>
+      <p class="leitor__erro" hidden>Essa página não quis abrir.</p>
     </div>
     <div class="leitor__rolo"></div>
     <div class="leitor__toques" aria-hidden="true"></div>
@@ -40,7 +40,7 @@ function modelo(v, total, controlesVisiveis) {
     <header class="leitor__topo leitor__ui" data-fase="${fase}">
       <div class="leitor__navegacao">
         <button class="leitor__voltar" type="button" data-leitor="fechar">${icone('arrow-left', 18)}<span>Estante</span></button>
-        <p class="leitor__lendo">BOA LEITURA, LUA</p>
+        <p class="leitor__lendo">BOA LEITURA</p>
       </div>
       <h1 class="leitor__titulo">${esc(nomeLongo(v))}</h1>
     </header>
@@ -165,16 +165,16 @@ export async function abrirLeitor(id, {
     slider.setAttribute('aria-valuetext', `Página ${pagina} de ${total}`);
 
     const marcada = (volume(v.id)?.marcadores || []).includes(pagina);
-    lendo.textContent = marcada ? 'PÁGINA MARCADA' : 'BOA LEITURA, LUA';
+    lendo.textContent = marcada ? 'PÁGINA MARCADA' : 'BOA LEITURA';
     rotuloMarcar.textContent = marcada ? 'Marcada' : 'Marcar';
     botaoMarcar.setAttribute('aria-pressed', String(marcada));
 
     const lado = p.direcao === 'rtl' ? 'esquerda' : 'direita';
     const naUltima = (dupla() ? fimDoPar(i) : i) === total - 1;
     if (naUltima && modoAtual !== 'vertical') {
-      dicaToque.textContent = proximoVolume(volume(v.id)) ? 'Tem o próximo esperando, amor' : 'Última página, Lulu';
+      dicaToque.textContent = proximoVolume(volume(v.id)) ? 'Tem o próximo esperando' : 'Última página';
     } else if (continuou) {
-      dicaToque.textContent = 'Seguindo pro próximo, xuxu';
+      dicaToque.textContent = 'Seguindo pro próximo';
     } else {
       dicaToque.textContent = '';
     }
@@ -348,7 +348,7 @@ export async function abrirLeitor(id, {
     else if (!p.telaAcesa) soltarTelaAcesa();
     camada.toggleAttribute('data-preto-puro', p.pretoPuro);
     camada.toggleAttribute('data-sepia', p.sepia);
-    dica.textContent = p.direcao === 'rtl' ? '← pra cá avança, Lua' : 'pra cá avança, Lua →';
+    dica.textContent = p.direcao === 'rtl' ? '← pra cá avança' : 'pra cá avança →';
 
     const motor = p.modo === 'vertical' ? 'vertical' : 'paginas';
     if (motor === modoAtual) {
@@ -685,7 +685,7 @@ export async function abrirLeitor(id, {
       alternarMarcador(v.id, indice + 1);
       mostrarPosicao(indice);
     } else if (acao === 'ajustar') {
-      if (modoAtual === 'vertical') avisar('O zoom é só no modo Páginas, xuxu.');
+      if (modoAtual === 'vertical') avisar('O zoom é só no modo Páginas.');
       else zerarZoom({ animar: true });
     } else if (acao === 'opcoes') abrirOpcoes();
     else if (acao === 'concluir') concluir();

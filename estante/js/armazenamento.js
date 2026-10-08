@@ -21,24 +21,11 @@ export async function atualizarArmazenamento() {
   }
 }
 
-/** Pedido feito pelo botão: mostra o resultado real, inclusive a recusa. */
-export async function pedirPersistencia() {
-  if (!storage?.persist) return;
-  let concedida = false;
-  try {
-    concedida = await storage.persist();
-  } catch (erro) {
-    console.error(erro);
-  }
-  definirArmazenamento({ persistente: concedida, recusada: !concedida });
-  atualizarArmazenamento();
-}
-
 let jaPediuSozinho = false;
 
 /**
  * Depois da primeira importação o app pede persistência sozinho, uma vez por abertura:
- * nem o Safari nem o Chrome mostram pergunta, e assim ela não depende de achar o botão em Ajustes.
+ * nem o Safari nem o Chrome mostram pergunta, então não precisa de botão.
  */
 export async function garantirPersistencia() {
   if (jaPediuSozinho || !storage?.persist || estado.armazenamento.persistente) return;

@@ -20,7 +20,7 @@ export function renderGerenciar({ confirmando = false } = {}) {
   if (marcados.length === 0) {
     rodape = '<button class="botao" type="button" disabled>Escolhe o que tirar</button>';
   } else if (confirmando) {
-    rodape = `<button class="botao" type="button" data-acao="remover-marcados">Tem certeza, amor? Toque de novo · ${tamanhoLegivel(total)}</button>`;
+    rodape = `<button class="botao" type="button" data-acao="remover-marcados">Tem certeza? Toca de novo · ${tamanhoLegivel(total)}</button>`;
   } else {
     rodape = `<button class="botao" type="button" data-acao="remover-marcados">Remover ${plural(marcados.length, 'volume', 'volumes')} · ${tamanhoLegivel(total)}</button>`;
   }
@@ -31,7 +31,7 @@ export function renderGerenciar({ confirmando = false } = {}) {
   </header>
   <div class="rolagem" data-rolagem="gerenciar">
     <div class="importar">
-      <h2 class="importar__titulo">Abrir espacinho, Lua</h2>
+      <h2 class="importar__titulo">Abrir espaço</h2>
       <p class="importar__texto">Seu progresso e suas anotações ficam, só os arquivos saem.</p>
       ${lista.length ? lista.map((v) => {
         const marcado = estado.paraRemover.has(v.id);

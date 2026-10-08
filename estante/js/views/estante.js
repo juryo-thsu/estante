@@ -29,19 +29,21 @@ export function renderEstante({ ocultoAgora } = {}) {
           </div>
           <p class="topo__total">${plural(todos.length, 'volume guardadinho', 'volumes guardadinhos')} pra você</p>
         </div>
-        <button class="adicionar" type="button" data-acao="adicionar">Adicionar</button>
+        <button class="adicionar" type="button" data-acao="adicionar"><span aria-hidden="true">＋</span> Adicionar</button>
       </header>
+
+      <div class="filete-editorial" aria-hidden="true"><span>✧</span></div>
 
       ${cartaoRetomar()}
 
       <div class="busca-linha">
         <label class="busca">
           ${icone('search', 20)}
-          <span class="so-leitor">Procura aqui, xuxu</span>
+          <span class="so-leitor">Procurar na estante</span>
           <span class="busca__campo-area">
             <input class="busca__campo" id="busca" type="search" inputmode="search" enterkeyhint="search"
               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-              placeholder="Procura aqui, xuxu" value="${esc(estado.busca)}">
+              placeholder="Procurar na estante" value="${esc(estado.busca)}">
           </span>
         </label>
         <button class="atalho atalho--anotacoes" type="button" data-acao="anotacoes">Anotações</button>
@@ -59,16 +61,14 @@ export function renderColecao() {
   const todos = visiveis();
   const lista = daGrade();
   const series = [...new Set(todos.map((v) => v.serie))];
-  const titulo = series.length === 1
-    ? `${series[0]} · ${plural(todos.length, 'volume', 'volumes')}`
-    : `Sua coleção · ${plural(todos.length, 'volume', 'volumes')}`;
+  const titulo = series.length === 1 ? series[0] : 'Sua coleção';
 
   const filtro = (id, rotulo, n) => `<button class="filtro" type="button" data-acao="filtro" data-filtro="${id}" aria-pressed="${estado.filtro === id}">${rotulo} · ${n}</button>`;
 
   let grade;
   if (lista.length === 0) {
     const termo = estado.busca.trim();
-    grade = `<p class="colecao__vazio">${termo ? `Não achei “${esc(termo)}”, amor.` : 'Nadinha aqui, Lua.'}</p>`;
+    grade = `<p class="colecao__vazio">${termo ? `Não achei “${esc(termo)}”.` : 'Nada aqui por enquanto.'}</p>`;
   } else if (series.length > 1 && estado.ordem !== 'recentes') {
     const grupos = [...new Set(lista.map((v) => v.serie))];
     grade = grupos.map((serie) => {
@@ -83,7 +83,7 @@ export function renderColecao() {
   const escondidos = ocultos().length;
 
   return `<div class="colecao__topo">
-      <h2 class="secao-titulo">${esc(titulo)}</h2>
+      <h2 class="secao-titulo">${esc(titulo)} <span class="colecao__contagem">${todos.length}</span></h2>
       <button class="ordenar" type="button" data-acao="ordenar" aria-label="Ordenação: ${ROTULO_DA_ORDEM[estado.ordem]}. Trocar">
         ${ROTULO_DA_ORDEM[estado.ordem]} ${icone('sort', 16)}
       </button>
@@ -105,11 +105,11 @@ function cartaoRetomar() {
     <span class="retomar__xadrez" aria-hidden="true"></span>
     ${capa(v, 'retomar')}
     <div class="retomar__texto">
-      <p class="retomar__chamada">DE ONDE VOCÊ PAROU, LULU</p>
+      <p class="retomar__chamada">SÓ MAIS UM CAPÍTULO</p>
       <h2 class="retomar__volume">${esc(nomeLongo(v))}</h2>
       <p class="retomar__pagina">Página ${v.pagina} de ${v.paginas} · ${pct}% lido</p>
       ${perolas(v.pagina / v.paginas, 'Progresso salvo')}
-      <button class="botao" type="button" data-acao="abrir" data-id="${esc(v.id)}">Continuar lendo, amor</button>
+      <button class="botao" type="button" data-acao="abrir" data-id="${esc(v.id)}">Continuar lendo</button>
     </div>
   </section>`;
 }
@@ -140,24 +140,41 @@ export function renderCarregando() {
   return `<header class="cabecalho"><h1 class="titulo">Estante</h1></header>
   <div class="carregando" role="status">
     <div class="carregando__simbolo">${icone('anel-girando', 48)}</div>
-    <h2 class="carregando__titulo">Arrumando sua estante, Lulu</h2>
+    <h2 class="carregando__titulo">Arrumando sua estante</h2>
     <p class="carregando__texto">Só um instantinho…</p>
     <div class="carregando__capas" aria-hidden="true"><span></span><span></span></div>
   </div>`;
 }
 
 function telaPrimeiroAcesso() {
-  return `<header class="cabecalho"><h1 class="titulo">Estante</h1></header>
-  <div class="rolagem">
-    <div class="conteudo">
-      <div class="tartan" aria-hidden="true"></div>
-      ${mensagemVazia({
-        nomeIcone: 'planet',
-        titulo: 'Uma estante só sua, Lua',
-        linhas: ['Tá vazia por enquanto, amorzinho.', 'Vamos trazer seus mangás?'],
-        convite: true,
-      })}
-      <button class="botao" type="button" data-acao="adicionar">Trazer meu primeiro mangá</button>
+  return `<div class="rolagem" data-rolagem="boas-vindas">
+    <div class="boas-vindas">
+      <header class="marca-editorial">
+        <span class="sobretitulo">ESTANTE PESSOAL</span>
+        <span class="marca-editorial__nome">Tsukina<span aria-hidden="true">✧</span></span>
+        <span class="sobretitulo">FEITA PRA LUA</span>
+      </header>
+      <div class="boas-vindas__miolo">
+        <div class="colagem" aria-hidden="true">
+          <div class="colagem__orbita"></div>
+          <span class="colagem__estrela colagem__estrela--um">✧</span>
+          <span class="colagem__estrela colagem__estrela--dois">✦</span>
+          <div class="colagem__capa colagem__capa--xadrez"><span>VOL.</span><strong>707</strong><span>UM LUGAR SÓ NOSSO</span></div>
+          <div class="colagem__capa colagem__capa--flor">
+            <span>PEQUENOS UNIVERSOS</span>
+            <svg class="borboleta" viewBox="0 0 160 130" fill="none"><path d="M80 103C53 102 17 88 21 58C24 32 63 42 80 85C97 42 136 32 139 58C143 88 107 102 80 103ZM79 91C44 76 29 107 47 118C61 128 76 111 80 101C84 111 99 128 113 118C131 107 116 76 81 91M80 101V69M80 74C72 60 64 58 60 61M80 74C88 60 96 58 100 61" stroke="currentColor" stroke-width="1.5"/><path d="M34 61C41 51 61 66 68 84M126 61C119 51 99 66 92 84M46 108L65 100M114 108L95 100" stroke="currentColor" stroke-width="1"/></svg>
+            <strong>entre<br><em>páginas.</em></strong>
+          </div>
+          <span class="colagem__selo">com amor,<br><em>pra Lua ♡</em></span>
+        </div>
+        <section class="boas-vindas__texto" aria-labelledby="boas-vindas-titulo">
+          <p class="sobretitulo">SEU PRÓXIMO CAPÍTULO</p>
+          <h1 id="boas-vindas-titulo">Um lugar para<br>suas <em>histórias.</em></h1>
+          <p>Seus mangás, seus favoritos e aquele capítulo que dá vontade de guardar. Tudo juntinho.</p>
+          <button class="botao" type="button" data-acao="adicionar">Trazer meu primeiro mangá <span aria-hidden="true">↗</span></button>
+          <span class="boas-vindas__detalhe">${icone('lock', 16)} Só seu. Até sem internet.</span>
+        </section>
+      </div>
     </div>
   </div>`;
 }
@@ -169,7 +186,7 @@ function telaVolumeOculto(v) {
       ${mensagemVazia({
         nomeIcone: 'lock',
         titulo: 'Volume escondido',
-        linhas: ['Tá guardadinho longe da estante,', 'só você sabe onde, xuxu.'],
+        linhas: ['Tá guardadinho longe da estante,', 'só você sabe onde.'],
       })}
       <button class="botao" type="button" data-acao="mostrar-volume" data-id="${esc(v.id)}">Mostrar de novo</button>
     </div>

@@ -26,7 +26,7 @@ function rodape(botao) {
 function avisoDeInstalacao() {
   if (!safariDoIos() || instalado()) return '';
   return `<section class="cartao-dados">
-    <h2 class="cartao-dados__titulo">Lulu, instala primeiro?</h2>
+    <h2 class="cartao-dados__titulo">Instala primeiro?</h2>
     <p class="cartao-dados__texto">Abrindo pelo ícone da tela de início, seus mangás ficam guardadinhos no lugar certo.</p>
     <button class="botao botao--secundario botao--44" type="button" data-acao="como-instalar">Me mostra como</button>
   </section>`;
@@ -39,7 +39,7 @@ function telaEscolher() {
       ${avisoDeInstalacao()}
       <section class="importar__cartao">
         ${icone('arquivos-zip', 40)}
-        <h2 class="importar__titulo">Traz seus mangás, amor</h2>
+        <h2 class="importar__titulo">Traz seus mangás</h2>
         <p class="importar__texto">Pode escolher vários .cbz ou .zip de uma vez.</p>
       </section>
       <ul class="formatos" aria-label="Formatos aceitos">
@@ -79,10 +79,10 @@ function telaResultados({ itens }) {
   let linhas;
   if (andando) {
     titulo = `Guardando ${Math.min(prontos + 1, itens.length)} de ${itens.length}…`;
-    linhas = ['Deixa o app aberto um pouquinho, xuxu.'];
+    linhas = ['Deixa o app aberto até terminar.'];
   } else {
     titulo = adicionados.length ? plural(adicionados.length, 'volume novo na estante!', 'volumes novos na estante!') : 'Nenhum volume entrou';
-    linhas = adicionados.length ? resumo(adicionados) : ['Olha o que aconteceu com cada um, amor.'];
+    linhas = adicionados.length ? resumo(adicionados) : ['Olha o que aconteceu com cada um.'];
   }
 
   return `${barraComVoltar('Chegando na estante')}

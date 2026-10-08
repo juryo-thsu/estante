@@ -71,18 +71,25 @@ button {
   white-space: nowrap;
 }
 
-/* Moldura: uma coluna de telefone. No iPhone ocupa a tela inteira;
-   em telas largas fica centralizada, na largura do quadro do Figma. */
+/* Uma estante de bolso no celular, com respiro de revista no computador. */
 .app {
   position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
-  max-width: 480px;
+  max-width: 1100px;
   margin-inline: auto;
   overflow: hidden;
   background: var(--color-background);
   transition: background-color var(--motion-out) var(--ease);
+}
+
+body {
+  background-image: radial-gradient(ellipse at 50% 0%, var(--color-glow), transparent 65%);
+}
+
+.app {
+  background-image: radial-gradient(ellipse at 100% 0%, var(--color-glow), transparent 45%);
 }
 
 .tela {
@@ -99,6 +106,8 @@ button {
   overflow-x: clip;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
 }
 
 /* Cabeçalho fixo das telas secundárias (Favoritos, Ajustes, estados vazios) */
@@ -106,13 +115,40 @@ button {
   flex: none;
   display: flex;
   align-items: center;
-  height: 64px;
+  min-height: 96px;
+  gap: var(--space-16);
   padding-inline: var(--gutter);
 }
 
 .titulo {
   font: var(--t-title);
-  white-space: nowrap;
+  letter-spacing: -0.045em;
+  overflow-wrap: anywhere;
+}
+
+.cabecalho::after {
+  content: "✧";
+  margin-left: auto;
+  color: var(--color-accent);
+  font: 24px/1 var(--font-display);
+}
+
+.sobretitulo {
+  color: var(--color-accent);
+  font: var(--t-label);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+
+/* Só com altura de tela grande: o iPhone deitado (até 600 px de altura) fica com o layout de celular, como o leitor. */
+@media (min-width: 700px) and (min-height: 601px) {
+  :root { --gutter: 40px; }
+  .app { border-inline: 1px solid var(--color-hairline); }
+  .cabecalho { min-height: 120px; }
+  .titulo { font-size: 40px; line-height: 1.2; }
+  .tela > .rolagem > .conteudo { width: 100%; max-width: 740px; margin-inline: auto; }
 }
 
 .conteudo {
